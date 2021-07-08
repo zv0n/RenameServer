@@ -1,0 +1,501 @@
+#include "rename_object.hpp"
+#include "functions.hpp"
+#include <climits>
+#include <iostream>
+#include <memory>
+#include <restbed>
+#include <sstream>
+#include <rapidjson/document.h>
+#include <rapidjson/stringbuffer.h>
+#include <rapidjson/writer.h>
+#include <string>
+#include <chrono>
+
+#include "jwt.hpp"
+
+#include "filesystem/filesystem.hpp"
+
+#include "config/config.hpp"
+
+std::vector<RenameLibrary> libraries{};
+Configuration cfg;
+
+void sendResponse(const std::string &response, int status_code, const std::shared_ptr< restbed::Session > session) {
+    session->close(status_code, response, { { "Content-Length", std::to_string(response.length()) }, { "Access-Control-Allow-Origin", "*" } });
+}
+
+void performPostFunc(const std::shared_ptr<restbed::Session> session, std::function<void(const std::shared_ptr<restbed::Session>, rapidjson::GenericDocument<rapidjson::UTF8<>>&)> callback) {
+    const auto request = session->get_request( );
+
+    int content_length = request->get_header( "Content-Length", 0 );
+
+    session->fetch( content_length, [callback]( const std::shared_ptr< restbed::Session > session, const restbed::Bytes & body )
+    {
+        rapidjson::Document doc;
+        std::cout << std::string(reinterpret_cast<const char*>(body.data()), body.size()) << std::endl;
+        doc.Parse(reinterpret_cast<const char*>(body.data()), body.size());
+        if(doc.HasParseError()) {
+            sendResponse("ERROR: Invalid body!", 401, session);
+            return;
+        }
+        callback(session, doc);
+    });
+}
+
+bool verifyLogin( const std::shared_ptr< restbed::Session > &session, rapidjson::GenericDocument<rapidjson::UTF8<>> &doc ) {
+    std::cout << "WAAA" << std::endl;
+    if(doc.FindMember("token") == doc.MemberEnd() || !doc["token"].IsString()) {
+        sendResponse("ERROR: Invalid token!", 401, session);
+        return false;
+    }
+    std::cout << "AAAA" << std::endl;
+    auto token = doc["token"].GetString();
+    auto res = verifyJWT(token);
+    if(!res) {
+        sendResponse("ERROR: Invalid token!", 401, session);
+    }
+    return res;
+}
+
+std::vector<std::pair<std::string, size_t>> getTypes() {
+    std::vector<std::pair<std::string, size_t>> result{};
+    for(size_t i = 0; i < libraries.size(); i++) {
+        result.emplace_back(libraries[i].name, i);
+    }
+    return result;
+}
+
+std::string getTypesJson() {
+    auto types = getTypes();
+    std::ostringstream result;
+    result << "[\n";
+    if(types.size() > 0) {
+        for(auto type : types) {
+            result << "  {\n    \"id\": " << type.second << "\n";
+            result << "    \"name\": \"" << type.first << "\"\n  },\n";
+        }
+        result.seekp(-2, std::ios_base::end);
+        result << "\n";
+    }
+    result << "]";
+    return result.str();
+}
+
+void getTypesRest( const std::shared_ptr< restbed::Session > session ) {
+    sendResponse(getTypesJson(), restbed::OK, session);
+}
+
+std::vector< RenameObject > getOptions(const RenameObject &search, size_t type) {
+    if(type >= libraries.size()) {
+        return {};
+    }
+    auto result = libraries[type].getOptions(search);
+    for(auto &res : result) {
+        res.setLibraryId(type);
+    }
+    return result;
+}
+
+std::string getOptionsJson(const RenameObject &search, size_t type) {
+    std::ostringstream res;
+    res << "[\n";
+    auto options = getOptions(search, type);
+    if(options.size() > 0) {
+        for(auto &option : options) {
+            res << option.toJson();
+            res << ",\n";
+        }
+        res.seekp( -2, std::ios_base::end );
+        res << "\n";
+    }
+    res << "]";
+    return res.str();
+}
+
+void getOptionsRest( const std::shared_ptr< restbed::Session > session, rapidjson::GenericDocument<rapidjson::UTF8<>> &doc )
+{
+    if(doc.HasParseError()) {
+        sendResponse("ERROR: Invalid body!", 401, session);
+        return;
+    }
+    if(!verifyLogin(session, doc)) {
+        return;
+    }
+    if(doc.FindMember("type") == doc.MemberEnd() || !doc["type"].IsUint64()) {
+        sendResponse("ERROR: Invalid type!", 401, session);
+        return;
+    }
+    if(doc.FindMember("search") == doc.MemberEnd() || !doc["search"].IsObject()) {
+        sendResponse("ERROR: Invalid search!", 401, session);
+        return;
+    }
+    size_t type_id = doc["type"].GetUint64();
+    RenameObject search;
+    rapidjson::StringBuffer sb;
+    rapidjson::Writer<rapidjson::StringBuffer> writer(sb);
+    doc["search"].Accept(writer);
+    std::string s = sb.GetString();
+    search.fromJson(s);
+    if(search.getPresentedName().empty()) {
+        sendResponse("Empty search", 401, session);
+        return;
+    }
+    sendResponse(getOptionsJson(search, type_id), 200, session);
+}
+
+std::vector< std::string > getCustomKeys(size_t type) {
+    if(type >= libraries.size()) {
+        return {};
+    }
+    auto result = libraries[type].getCustomKeys();
+    return result;
+}
+
+std::string getCustomKeysJson(size_t type) {
+    std::ostringstream res;
+    res << "[\n";
+    auto custom_keys = getCustomKeys(type);
+    if(custom_keys.size() > 0) {
+        for(auto &key : custom_keys) {
+            res << "\"" << key << "\",\n";
+        }
+        res.seekp( -2, std::ios_base::end );
+        res << "\n";
+    }
+    res << "]";
+    return res.str();
+}
+
+void getCustomKeysRest( const std::shared_ptr< restbed::Session > session, rapidjson::GenericDocument<rapidjson::UTF8<>> &doc )
+{
+    if(doc.FindMember("type") == doc.MemberEnd() || !doc["type"].IsUint64()) {
+        sendResponse("ERROR: Invalid type!", 401, session);
+        return;
+    }
+    size_t type_id = doc["type"].GetUint64();
+    sendResponse(getCustomKeysJson(type_id), 200, session);
+}
+
+std::pair<bool, std::string> renamePath(std::string path, const RenameObject &renamer) {
+    if(renamer.getLibraryId() >= libraries.size()) {
+        return {false, "Invalid library id"};
+    }
+    if(path[0] == '/' && path.substr(0, cfg.getSourcePath().length()) != cfg.getSourcePath()) {
+        return {false, "Invalid path"};
+    } else if(path.find("..") != std::string::npos) {
+        return {false, "Path cannot contain '..'"};
+    } else if(path[0] != '/') {
+        path = cfg.getSourcePath() + "/" + path;
+    }
+    if(!FSLib::exists(path)) {
+        return {false, "Source doesn't exist"};
+    }
+    return {libraries[renamer.getLibraryId()].renamePath(path, renamer), "Library error"};
+}
+
+std::string renamePathJson(const std::string &path, const RenameObject &renamer) {
+    std::ostringstream res;
+    res << "{\n  \"success\": ";
+    auto rename_result = renamePath(path, renamer);
+    if(rename_result.first) {
+        res << "true";
+    } else {
+        res << "false";
+    }
+    res << "\"\n";
+    if(!rename_result.first) {
+        res << "  \"error\": \"" << rename_result.second << "\"\n";
+    }
+    res << "}";
+    return res.str();
+}
+
+void renamePathRest( const std::shared_ptr< restbed::Session > session, rapidjson::GenericDocument<rapidjson::UTF8<>> &doc ) {
+    if(!verifyLogin(session, doc)) {
+        return;
+    }
+    if(doc.FindMember("path") == doc.MemberEnd() || !doc["path"].IsString()) {
+        // TODO validate path, also validate against config
+        sendResponse("ERROR: Invalid path!", 401, session);
+        return;
+    }
+    if(doc.FindMember("renamer") == doc.MemberEnd() || !doc["renamer"].IsObject()) {
+        sendResponse("ERROR: Invalid renamer!", 401, session);
+        return;
+    }
+    std::string path = doc["path"].GetString();
+    RenameObject renamer;
+    rapidjson::StringBuffer sb;
+    rapidjson::Writer<rapidjson::StringBuffer> writer(sb);
+    doc["renamer"].Accept(writer);
+    std::string s = sb.GetString();
+    renamer.fromJson(s);
+    sendResponse(renamePathJson(path, renamer), 200, session);
+}
+
+std::string getFilesJson() {
+    std::ostringstream res;
+    res << "[\n";
+    auto files = getFilesInSource(cfg.getSourcePath());
+    if(files.size() > 0) {
+        for(const auto &file : files) {
+            res << "\"" << file << "\",\n";
+        }
+        res.seekp(-2, std::ios_base::end);
+    }
+    res << "\n]";
+    return res.str();
+}
+
+void getFilesRest( const std::shared_ptr< restbed::Session > session, rapidjson::GenericDocument<rapidjson::UTF8<>> &doc )
+{
+    if(!verifyLogin(session, doc)) {
+        return;
+    }
+    sendResponse(getFilesJson(), restbed::OK, session);
+}
+
+std::vector<std::pair<uint64_t, std::string>> getTargets() {
+    std::vector<std::pair<uint64_t, std::string>> result;
+    const auto &targets = cfg.getTargetPaths();
+    for(uint64_t i = 0; i < targets.size(); i++) {
+        result.emplace_back(i, targets[i].second);
+    }
+    return result;
+}
+
+std::string getTargetsJson() {
+    std::ostringstream res;
+    res << "[\n";
+    auto targets = getTargets();
+    if(targets.size() > 0) {
+        for(const auto &target : targets) {
+            res << "  {\n" << "    \"id\": " << target.first << "\n";
+            res << "    \"name\": \"" << target.second << "\"\n  },\n";
+        }
+        res.seekp(-2, std::ios_base::end);
+    }
+    res << "\n]";
+    return res.str();
+}
+
+void getTargetsRest( const std::shared_ptr< restbed::Session > session, rapidjson::GenericDocument<rapidjson::UTF8<>> &doc )
+{
+    if(!verifyLogin(session, doc)) {
+        return;
+    }
+    sendResponse(getTargetsJson(), restbed::OK, session);
+}
+
+std::string getTargetDirectoriesJson(uint64_t id) {
+    if(id >= cfg.getTargetPaths().size()) {
+        return "";
+    }
+    std::ostringstream res;
+    res << "[\n";
+    auto dirs = getTargetDirectories(cfg.getTargetPaths()[id].first);
+    if(dirs.size() > 0) {
+        for(const auto &dir : dirs) {
+            res << "  \"" << dir << "\",\n";
+        }
+        res.seekp(-2, std::ios_base::end);
+    }
+    res << "\n]";
+    return res.str();
+}
+
+void getTargetDirectoriesRest( const std::shared_ptr< restbed::Session > session, rapidjson::GenericDocument<rapidjson::UTF8<>> &doc )
+{
+    if(!verifyLogin(session, doc)) {
+        return;
+    }
+    uint64_t id = 0;
+    if(doc.FindMember("path_id") == doc.MemberEnd() || !doc["path_id"].IsUint64() || (id = doc["path_id"].GetUint64()) >= cfg.getTargetPaths().size()) {
+        sendResponse("ERROR: Invalid path_id!", 401, session);
+        return;
+    }
+    sendResponse(getTargetDirectoriesJson(id), restbed::OK, session);
+}
+
+std::pair<bool, std::string> move(std::string path, uint64_t target_id, const std::string &containing_dir) {
+    if(path[0] == '/' && path.substr(0, cfg.getSourcePath().length()) != cfg.getSourcePath()) {
+        return {false, "Invalid path"};
+    } else if(path.find("..") != std::string::npos) {
+        return {false, "Path cannot contain '..'"};
+    } else if(path[0] != '/') {
+        path = cfg.getSourcePath() + "/" + path;
+    }
+    if(target_id >= cfg.getTargetPaths().size()) {
+        return {false, "Invalid target_id"};
+    }
+    if(!FSLib::exists(path)) {
+        return {false, "Source doesn't exist"};
+    }
+    auto target_dir = cfg.getTargetPaths()[target_id].first + FSLib::dir_divisor + containing_dir;
+    if(!FSLib::exists(target_dir)) {
+        FSLib::createDirectoryFull(target_dir);
+    }
+    return {FSLib::rename(path, target_dir + FSLib::dir_divisor + FSLib::getFileName(path)), "Library error"};
+}
+
+std::string moveJson(const std::string &path, uint64_t target_id, const std::string &containing_dir) {
+    std::ostringstream res;
+    res << "{\n  \"success\": ";
+    auto move_result = move(path, target_id, containing_dir);
+    if(move_result.first) {
+        res << "true";
+    } else {
+        res << "false";
+    }
+    res << "\"\n";
+    if(!move_result.first) {
+        res << "  \"error\": \"" << move_result.second << "\"\n";
+    }
+    res << "}";
+    return res.str();
+}
+
+void moveRest( const std::shared_ptr< restbed::Session > session, rapidjson::GenericDocument<rapidjson::UTF8<>> &doc )
+{
+    if(!verifyLogin(session, doc)) {
+        return;
+    }
+    std::string containing_dir = "";
+    if(doc.FindMember("path") == doc.MemberEnd() || !doc["path"].IsString()) {
+        // TODO validate path, also validate against config
+        sendResponse("ERROR: Invalid path!", 401, session);
+        return;
+    }
+    uint64_t id = 0;
+    if(doc.FindMember("target_id") == doc.MemberEnd() || !doc["target_id"].IsUint64() || (id = doc["target_id"].GetUint64()) >= cfg.getTargetPaths().size()) {
+        sendResponse("ERROR: Invalid target_id!", 401, session);
+        return;
+    }
+    if(doc.FindMember("containing_dir") != doc.MemberEnd() && doc["containing_dir"].IsString()) {
+        containing_dir = doc["containing_dir"].GetString();
+    }
+    std::string path = doc["path"].GetString();
+    // TODO correct response code
+    sendResponse(moveJson(path, id, containing_dir), 200, session);
+}
+
+void loginRest( const std::shared_ptr< restbed::Session > session, rapidjson::GenericDocument<rapidjson::UTF8<>> &doc ) {
+    if(doc.FindMember("user") == doc.MemberEnd() || !doc["user"].IsString()) {
+        sendResponse("ERROR: Invalid user!", 401, session);
+        return;
+    }
+    if(doc.FindMember("password") == doc.MemberEnd() || !doc["password"].IsString()) {
+        sendResponse("ERROR: Invalid password!", 401, session);
+        return;
+    }
+    auto user = doc["user"].GetString();
+    auto password = doc["password"].GetString();
+    bool valid = false;
+    for(auto &user_cfg : cfg.getUsers()) {
+        if(user_cfg.first == user) {
+            valid = user_cfg.second == password;
+            break;
+        }
+    }
+    if(valid) {
+        sendResponse(createLoginToken(user), 200, session);
+    } else {
+        sendResponse("Invalid user/password", 401, session);
+    }
+}
+
+void getOptionsCall(const std::shared_ptr<restbed::Session> session) {
+    performPostFunc(session, getOptionsRest);
+}
+
+void getCustomKeysCall(const std::shared_ptr<restbed::Session> session) {
+    performPostFunc(session, getCustomKeysRest);
+}
+
+void renameCall(const std::shared_ptr<restbed::Session> session) {
+    performPostFunc(session, renamePathRest);
+}
+
+void getFilesCall(const std::shared_ptr<restbed::Session> session) {
+    performPostFunc(session, getFilesRest);
+}
+
+void getTargetsCall(const std::shared_ptr<restbed::Session> session) {
+    performPostFunc(session, getTargetsRest);
+}
+
+void getTargetDirectoriesCall(const std::shared_ptr<restbed::Session> session) {
+    performPostFunc(session, getTargetDirectoriesRest);
+}
+
+void moveCall(const std::shared_ptr<restbed::Session> session) {
+    performPostFunc(session, moveRest);
+}
+
+void loginCall(const std::shared_ptr<restbed::Session> session) {
+    performPostFunc(session, loginRest);
+}
+
+int main(int argc, char **argv) {
+    cfg.readConfiguration("/etc/renameserver/main.cfg");
+
+    libraries = getLibraries(cfg.getLibraries());
+    for(auto &library : libraries) {
+        library.init(library.config);
+    }
+
+    restbed::Service service;
+
+    auto get_types = std::make_shared< restbed::Resource >();
+    get_types->set_path("/get_types");
+    get_types->set_method_handler( "GET", getTypesRest );
+    service.publish(get_types);
+
+    auto search = std::make_shared< restbed::Resource >();
+    search->set_path("/search");
+    search->set_method_handler( "POST", getOptionsCall );
+    service.publish(search);
+
+    auto custom_fields = std::make_shared< restbed::Resource >();
+    custom_fields->set_path("/get_custom_fields");
+    custom_fields->set_method_handler( "POST", getCustomKeysCall );
+    service.publish(custom_fields);
+
+    auto rename_path = std::make_shared< restbed::Resource >();
+    rename_path->set_path("/rename");
+    rename_path->set_method_handler( "POST", renameCall );
+    service.publish(rename_path);
+
+    auto get_files = std::make_shared< restbed::Resource >();
+    get_files->set_path("/get_files");
+    get_files->set_method_handler( "POST", getFilesCall );
+    service.publish(get_files);
+
+    auto get_targets = std::make_shared< restbed::Resource >();
+    get_targets->set_path("/get_targets");
+    get_targets->set_method_handler( "POST", getTargetsCall );
+    service.publish(get_targets);
+
+    auto get_target_directories = std::make_shared< restbed::Resource >();
+    get_target_directories->set_path("/get_target_directories");
+    get_target_directories->set_method_handler( "POST", getTargetDirectoriesCall );
+    service.publish(get_target_directories);
+
+    auto move = std::make_shared< restbed::Resource >();
+    move->set_path("/move");
+    move->set_method_handler( "POST", moveCall );
+    service.publish(move);
+
+    auto login = std::make_shared< restbed::Resource >();
+    login->set_path("/login");
+    login->set_method_handler( "POST", loginCall );
+    service.publish(login);
+
+    auto settings = std::make_shared< restbed::Settings >();
+    settings->set_port(1984);
+    settings->set_default_header( "Connection", "close" );
+
+    service.start(settings);
+
+    return 0;
+}
