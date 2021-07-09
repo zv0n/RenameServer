@@ -1,13 +1,14 @@
+#include <algorithm>
 #include <dlfcn.h>
 #include <iostream>
 #include "functions.hpp"
 #include "filesystem/filesystem.hpp"
 
-std::vector< RenameLibrary > getLibraries(const std::vector<std::tuple<std::string,std::string,std::string>> &libraries) {
+std::vector< RenameLibrary > getLibraries(const std::vector<std::pair<std::string,std::string>> &libraries) {
     // TODO get from config file
     std::vector< RenameLibrary > result{};
     for ( auto &library : libraries ) {
-        void *libhndl = dlopen( std::get<0>(library).c_str(), RTLD_NOW );
+        void *libhndl = dlopen( library.first.c_str(), RTLD_NOW );
         if ( !libhndl ) {
             std::cerr << "Could not load library " << std::get<0>(library) << std::endl;
             closeLibraries( result );
@@ -39,8 +40,8 @@ std::vector< RenameLibrary > getLibraries(const std::vector<std::tuple<std::stri
             result.push_back( rl );
             goto dlsymerror;
         }
-        rl.name = std::get<1>(library);
-        rl.config = std::get<2>(library);
+        rl.getName = ( const std::string(*)() ) dlsym( libhndl, "getName" );
+        rl.config = library.second;
         result.push_back( rl );
     }
     return result;

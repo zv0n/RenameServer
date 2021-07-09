@@ -22,7 +22,6 @@ bool Configuration::readConfiguration(const std::string &file) {
     for(auto &library : cfg_libraries) {
         libraries.emplace_back(
                 library.lookup("path"),
-                library.lookup("name"),
                 library.lookup("config"));
     }
 
@@ -39,7 +38,7 @@ bool Configuration::readConfiguration(const std::string &file) {
 const std::string &Configuration::getSourcePath() {
     return source_path;
 }
-const std::vector<std::tuple<std::string, std::string, std::string>> &Configuration::getLibraries() {
+const std::vector<std::pair<std::string, std::string>> &Configuration::getLibraries() {
     return libraries;
 }
 const std::vector<std::pair<std::string, std::string>> &Configuration::getTargetPaths() {

@@ -18,6 +18,9 @@ add_executable(RenameServer
     jwt.cpp
     )
 target_link_libraries(RenameServer restbed config++ jwt)
+if(UNIX AND NOT APPLE)
+    target_link_libraries(RenameServer dl)
+endif()
 
 add_library(thetvdb SHARED
     thetvdb/tv_rename.cpp

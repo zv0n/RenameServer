@@ -20,6 +20,7 @@ bool init(const string &configuration);
 std::vector< RenameObject > getOptions( const RenameObject &search );
 bool renamePath( const string &path, const RenameObject &renamer );
 std::vector< string > getCustomKeys();
+const string getName();
 }
 
 #endif // TV_RENAME_HPP

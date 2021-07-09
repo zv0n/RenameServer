@@ -60,7 +60,7 @@ bool verifyLogin( const std::shared_ptr< restbed::Session > &session, rapidjson:
 std::vector<std::pair<std::string, size_t>> getTypes() {
     std::vector<std::pair<std::string, size_t>> result{};
     for(size_t i = 0; i < libraries.size(); i++) {
-        result.emplace_back(libraries[i].name, i);
+        result.emplace_back(libraries[i].getName(), i);
     }
     return result;
 }

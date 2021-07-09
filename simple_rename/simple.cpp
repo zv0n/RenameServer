@@ -49,3 +49,7 @@ bool renamePath( const string &path, const RenameObject &renamer ) {
 std::vector< string > getCustomKeys() {
     return { "new_name" };
 }
+
+const string getName() {
+    return "simple rename";
+}

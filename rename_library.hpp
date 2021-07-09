@@ -9,6 +9,7 @@ struct RenameLibrary {
     std::vector< RenameObject > ( *getOptions )( const RenameObject & );
     bool ( *renamePath )( const std::string &, const RenameObject & );
     std::vector< std::string > ( *getCustomKeys )();
+    const std::string ( *getName )();
     void *libhndl;
     std::string name;
     std::string config;

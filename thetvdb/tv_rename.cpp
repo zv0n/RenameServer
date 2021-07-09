@@ -412,3 +412,7 @@ bool renamePath( const string &path, const RenameObject &renamer ) {
 std::vector< string > getCustomKeys() {
     return { "id", "language", "pattern", "order" };
 }
+
+const string getName() {
+    return "thetvdb";
+}
