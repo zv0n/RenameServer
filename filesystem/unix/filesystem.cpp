@@ -1,6 +1,7 @@
 #include "../filesystem.hpp"
 #include <cstring>
 #include <sys/stat.h>
+#include <unistd.h>
 #ifdef __APPLE__
 #include <sys/syslimits.h>
 #endif
@@ -69,6 +70,34 @@ bool FSLib::rename( const string &file_a, const string &file_b ) {
     // TODO log
     std::cout << file_a << " -> " << file_b << std::endl;
     return ::rename( file_a.c_str(), file_b.c_str() ) == 0;
+}
+
+// TODO do windows version
+bool deleteRecursive(const string &dir) {
+    for(const auto &file : FSLib::Directory(dir)) {
+        auto path = dir + "/" + file;
+        if(FSLib::isDirectory(path)) {
+            if(!deleteRecursive(path)) {
+                return false;
+            }
+        } else if(unlink(path.c_str()) != 0) {
+            return false;
+        }
+    }
+    return rmdir(dir.c_str()) == 0;
+}
+
+bool FSLib::deleteFile( const string &file ) {
+    // TODO log
+    auto canon = canonical( file );
+    if(canon.empty()) {
+        return false;
+    }
+
+    if(isDirectory(canon)) {
+        return deleteRecursive(canon);
+    }
+    return unlink(canon.c_str()) == 0;
 }
 
 bool FSLib::createDirectoryFull( const string &path ) {

@@ -27,6 +27,7 @@ namespace FSLib {
 bool exists( const string &path );
 bool isDirectory( const string &path );
 bool rename( const string &file_a, const string &file_b );
+bool deleteFile( const string &file );
 string canonical( const string &path );
 bool createDirectoryFull( const string &path );
 string getContainingDirectory( const string &path );
