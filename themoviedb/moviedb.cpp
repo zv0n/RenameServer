@@ -56,6 +56,10 @@ bool init(const string &config_path) {
     return true;
 }
 
+bool hasKey(const rapidjson::GenericValue<rapidjson::UTF8<>> &object, const std::string &key) {
+    return object.FindMember(key.c_str()) != object.MemberEnd();
+}
+
 std::vector< std::tuple< string, string, string, string > >
 searchMovie( const string &movie, const string &language, const string &year ) {
     Request &request = _moviedb_request;
@@ -89,6 +93,10 @@ searchMovie( const string &movie, const string &language, const string &year ) {
 
         // find all possible movies
         for ( size_t i = 0; i < results.Size(); i++ ) {
+            if(!hasKey(results[i], "title") || !hasKey(results[i], "id") ||
+                !hasKey(results[i], "release_date") || !hasKey(results[i], "original_title")) {
+                continue;
+            }
             auto movie = toString( results[i]["title"].GetString() );
             auto id = toString( std::to_string( results[i]["id"].GetInt() ) );
             string year = toString( results[i]["release_date"].GetString() );

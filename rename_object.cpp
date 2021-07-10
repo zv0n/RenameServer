@@ -1,4 +1,5 @@
 #include "rename_object.hpp"
+#include "functions.hpp"
 #include <sstream>
 #include <rapidjson/document.h>
 #include <iostream>
@@ -35,11 +36,11 @@ void RenameObject::clearCustomFields() {
 std::string RenameObject::toJson() const {
     std::ostringstream result;
     result << "{\n  \"library_id\": " << _library_id << ",\n";
-    result << "  \"name\": \"" << _name << "\",\n";
+    result << "  \"name\": \"" << safeJson(_name) << "\",\n";
     result << "  \"custom_fields\": {\n";
     if ( _custom_fields.size() > 0 ) {
         for ( auto &entry : _custom_fields ) {
-            result << "    \"" << entry.first << "\": \"" << entry.second
+            result << "    \"" << safeJson(entry.first) << "\": \"" << safeJson(entry.second)
                    << "\",\n";
         }
         result.seekp( -2, std::ios_base::end );

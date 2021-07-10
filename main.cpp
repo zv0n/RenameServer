@@ -68,24 +68,27 @@ std::vector<std::pair<std::string, size_t>> getTypes() {
 std::string getTypesJson() {
     auto types = getTypes();
     std::ostringstream result;
-    result << "[\n";
+    result << "{\n  \"types\": [\n";
     if(!types.empty()) {
         for(const auto &type : types) {
-            result << "  {\n    \"id\": " << type.second << "\n";
-            result << "    \"name\": \"" << type.first << "\"\n  },\n";
+            result << "  {\n    \"id\": " << type.second << ",\n";
+            result << "    \"name\": \"" << safeJson(type.first) << "\"\n  },\n";
         }
         result.seekp(-2, std::ios_base::end);
         result << "\n";
     }
-    result << "]";
-    return result.str();
+    result << "  ]\n}";
+    auto res = result.str();
+    std::cout << res << std::endl;
+    return res;
 }
 
 void getTypesRest( const std::shared_ptr< restbed::Session > &session ) {
     sendResponse(getTypesJson(), restbed::OK, session);
 }
 
-std::vector< RenameObject > getOptions(const RenameObject &search, size_t type) {
+std::vector< RenameObject > getOptions(const RenameObject &search) {
+    auto type = search.getLibraryId();
     if(type >= libraries.size()) {
         return {};
     }
@@ -96,10 +99,10 @@ std::vector< RenameObject > getOptions(const RenameObject &search, size_t type) 
     return result;
 }
 
-std::string getOptionsJson(const RenameObject &search, size_t type) {
+std::string getOptionsJson(const RenameObject &search) {
     std::ostringstream res;
-    res << "[\n";
-    auto options = getOptions(search, type);
+    res << "{\n  \"options\": [\n";
+    auto options = getOptions(search);
     if(!options.empty()) {
         for(auto &option : options) {
             res << option.toJson();
@@ -108,8 +111,10 @@ std::string getOptionsJson(const RenameObject &search, size_t type) {
         res.seekp( -2, std::ios_base::end );
         res << "\n";
     }
-    res << "]";
-    return res.str();
+    res << "  ]\n}";
+    auto result = res.str();
+    std::cout << result << std::endl;
+    return result;
 }
 
 void getOptionsRest( const std::shared_ptr< restbed::Session > &session, rapidjson::GenericDocument<rapidjson::UTF8<>> &doc )
@@ -121,26 +126,21 @@ void getOptionsRest( const std::shared_ptr< restbed::Session > &session, rapidjs
     if(!verifyLogin(session, doc)) {
         return;
     }
-    if(doc.FindMember("type") == doc.MemberEnd() || !doc["type"].IsUint64()) {
-        sendResponse("ERROR: Invalid type!", 401, session);
-        return;
-    }
-    if(doc.FindMember("search") == doc.MemberEnd() || !doc["search"].IsObject()) {
+    if(doc.FindMember("info") == doc.MemberEnd() || !doc["info"].IsObject()) {
         sendResponse("ERROR: Invalid search!", 401, session);
         return;
     }
-    size_t type_id = doc["type"].GetUint64();
     RenameObject search;
     rapidjson::StringBuffer sb;
     rapidjson::Writer<rapidjson::StringBuffer> writer(sb);
-    doc["search"].Accept(writer);
+    doc["info"].Accept(writer);
     std::string s = sb.GetString();
     search.fromJson(s);
     if(search.getPresentedName().empty()) {
         sendResponse("Empty search", 401, session);
         return;
     }
-    sendResponse(getOptionsJson(search, type_id), 200, session);
+    sendResponse(getOptionsJson(search), 200, session);
 }
 
 std::vector< std::string > getCustomKeys(size_t type) {
@@ -153,16 +153,16 @@ std::vector< std::string > getCustomKeys(size_t type) {
 
 std::string getCustomKeysJson(size_t type) {
     std::ostringstream res;
-    res << "[\n";
+    res << "{\n  \"custom_keys\": [\n";
     auto custom_keys = getCustomKeys(type);
     if(!custom_keys.empty()) {
         for(auto &key : custom_keys) {
-            res << "\"" << key << "\",\n";
+            res << "\"" << safeJson(key) << "\",\n";
         }
         res.seekp( -2, std::ios_base::end );
         res << "\n";
     }
-    res << "]";
+    res << "  ]\n}";
     return res.str();
 }
 
@@ -204,9 +204,9 @@ std::string renamePathJson(const std::string &path, const RenameObject &renamer)
     } else {
         res << "false";
     }
-    res << "\"\n";
+    res << "\n";
     if(!rename_result.first) {
-        res << "  \"error\": \"" << rename_result.second << "\"\n";
+        res << "  \"error\": \"" << safeJson(rename_result.second) << "\"\n";
     }
     res << "}";
     return res.str();
@@ -221,15 +221,15 @@ void renamePathRest( const std::shared_ptr< restbed::Session > &session, rapidjs
         sendResponse("ERROR: Invalid path!", 401, session);
         return;
     }
-    if(doc.FindMember("renamer") == doc.MemberEnd() || !doc["renamer"].IsObject()) {
-        sendResponse("ERROR: Invalid renamer!", 401, session);
+    if(doc.FindMember("info") == doc.MemberEnd() || !doc["info"].IsObject()) {
+        sendResponse("ERROR: Invalid info!", 401, session);
         return;
     }
     std::string path = doc["path"].GetString();
     RenameObject renamer;
     rapidjson::StringBuffer sb;
     rapidjson::Writer<rapidjson::StringBuffer> writer(sb);
-    doc["renamer"].Accept(writer);
+    doc["info"].Accept(writer);
     std::string s = sb.GetString();
     renamer.fromJson(s);
     sendResponse(renamePathJson(path, renamer), 200, session);
@@ -237,15 +237,15 @@ void renamePathRest( const std::shared_ptr< restbed::Session > &session, rapidjs
 
 std::string getFilesJson() {
     std::ostringstream res;
-    res << "[\n";
+    res << "{\n  \"files\": [\n";
     auto files = getFilesInSource(cfg.getSourcePath());
     if(!files.empty()) {
         for(const auto &file : files) {
-            res << "\"" << file << "\",\n";
+            res << "\"" << safeJson(file) << "\",\n";
         }
         res.seekp(-2, std::ios_base::end);
     }
-    res << "\n]";
+    res << "\n  ]\n}";
     return res.str();
 }
 
@@ -268,16 +268,16 @@ std::vector<std::pair<uint64_t, std::string>> getTargets() {
 
 std::string getTargetsJson() {
     std::ostringstream res;
-    res << "[\n";
+    res << "{\n  \"targets\": [\n";
     auto targets = getTargets();
     if(!targets.empty()) {
         for(const auto &target : targets) {
             res << "  {\n" << "    \"id\": " << target.first << "\n";
-            res << "    \"name\": \"" << target.second << "\"\n  },\n";
+            res << "    \"name\": \"" << safeJson(target.second) << "\"\n  },\n";
         }
         res.seekp(-2, std::ios_base::end);
     }
-    res << "\n]";
+    res << "\n  ]\n}";
     return res.str();
 }
 
@@ -294,15 +294,15 @@ std::string getTargetDirectoriesJson(uint64_t id) {
         return "";
     }
     std::ostringstream res;
-    res << "[\n";
+    res << "{\n  \"target_directories\": [\n";
     auto dirs = getTargetDirectories(cfg.getTargetPaths()[id].first);
     if(!dirs.empty()) {
         for(const auto &dir : dirs) {
-            res << "  \"" << dir << "\",\n";
+            res << "  \"" << safeJson(dir) << "\",\n";
         }
         res.seekp(-2, std::ios_base::end);
     }
-    res << "\n]";
+    res << "\n  ]\n}";
     return res.str();
 }
 
@@ -351,9 +351,9 @@ std::string moveJson(const std::string &path, uint64_t target_id, const std::str
     } else {
         res << "false";
     }
-    res << "\"\n";
+    res << "\n";
     if(!move_result.first) {
-        res << "  \"error\": \"" << move_result.second << "\"\n";
+        res << "  \"error\": \"" << safeJson(move_result.second) << "\"\n";
     }
     res << "}";
     return res.str();
@@ -408,9 +408,9 @@ std::string removeJson(const std::string &path) {
     } else {
         res << "false";
     }
-    res << "\"\n";
+    res << "\n";
     if(!remove_result.first) {
-        res << "  \"error\": \"" << remove_result.second << "\"\n";
+        res << "  \"error\": \"" << safeJson(remove_result.second) << "\"\n";
     }
     res << "}";
     return res.str();
@@ -429,6 +429,12 @@ void removeRest( const std::shared_ptr< restbed::Session > &session, rapidjson::
     std::string path = doc["path"].GetString();
     // TODO correct response code
     sendResponse(removeJson(path), 200, session);
+}
+
+std::string loginJson(const std::string &user) {
+    std::ostringstream res;
+    res << "{\n  \"token\": \"" << createLoginToken(user) << "\"\n}";
+    return res.str();
 }
 
 void loginRest( const std::shared_ptr< restbed::Session > &session, rapidjson::GenericDocument<rapidjson::UTF8<>> &doc ) {
@@ -450,7 +456,7 @@ void loginRest( const std::shared_ptr< restbed::Session > &session, rapidjson::G
         }
     }
     if(valid) {
-        sendResponse(createLoginToken(user), 200, session);
+        sendResponse(loginJson(user), 200, session);
     } else {
         sendResponse("Invalid user/password", 401, session);
     }

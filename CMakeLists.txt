@@ -26,6 +26,7 @@ add_library(thetvdb SHARED
     thetvdb/tv_rename.cpp
     thetvdb/functions.cpp
     rename_object.cpp
+    functions.cpp
     filesystem/unix/filesystem.cpp
     network/unix/network.cpp)
 
@@ -34,12 +35,14 @@ target_link_libraries(thetvdb curl)
 add_library(simple SHARED
     simple_rename/simple.cpp
     rename_object.cpp
+    functions.cpp
     filesystem/unix/filesystem.cpp)
 
 add_library(moviedb SHARED
     themoviedb/moviedb.cpp
     themoviedb/functions.cpp
     rename_object.cpp
+    functions.cpp
     filesystem/unix/filesystem.cpp
     network/unix/network.cpp)
 

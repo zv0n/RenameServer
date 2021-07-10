@@ -88,3 +88,17 @@ std::vector< std::string > getTargetDirectories( const std::string &target_dir )
     std::sort(result.begin(), result.end());
     return result;
 }
+
+std::string safeJson(std::string input) {
+    for(size_t i = 0; i < input.size(); i++) {
+        if(input[i] == '\\') {
+            input.insert(i, "\\");
+            i++;
+        }
+        if(input[i] == '"') {
+            input.insert(i, "\\");
+            i++;
+        }
+    }
+    return input;
+}
