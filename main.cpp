@@ -272,7 +272,7 @@ std::string getTargetsJson() {
     auto targets = getTargets();
     if(!targets.empty()) {
         for(const auto &target : targets) {
-            res << "  {\n" << "    \"id\": " << target.first << "\n";
+            res << "  {\n" << "    \"id\": " << target.first << ",\n";
             res << "    \"name\": \"" << safeJson(target.second) << "\"\n  },\n";
         }
         res.seekp(-2, std::ios_base::end);
