@@ -180,15 +180,15 @@ std::pair<bool, std::string> renamePath(std::string path, const RenameObject &re
     if(renamer.getLibraryId() >= libraries.size()) {
         return {false, "Invalid library id"};
     }
-    if(path[0] == '/' && path.substr(0, cfg.getSourcePath().length()) != cfg.getSourcePath()) {
-        return {false, "Invalid path"};
-    }
-    if(path.find("..") != std::string::npos) {
-        return {false, "Path cannot contain '..'"};
-    }
     if(path[0] != '/') {
         path = cfg.getSourcePath() + "/" + path;
     }
+
+    auto canon_path = FSLib::canonical(path);
+    if(canon_path.substr(0, cfg.getSourcePath().length()) != cfg.getSourcePath()) {
+        return {false, "Invalid path"};
+    }
+
     if(!FSLib::exists(path)) {
         return {false, "Source doesn't exist"};
     }
@@ -320,22 +320,31 @@ void getTargetDirectoriesRest( const std::shared_ptr< restbed::Session > &sessio
 }
 
 std::pair<bool, std::string> move(std::string path, uint64_t target_id, const std::string &containing_dir) {
-    if(path[0] == '/' && path.substr(0, cfg.getSourcePath().length()) != cfg.getSourcePath()) {
-        return {false, "Invalid path"};
-    }
-    if(path.find("..") != std::string::npos) {
-        return {false, "Path cannot contain '..'"};
-    }
     if(path[0] != '/') {
         path = cfg.getSourcePath() + "/" + path;
     }
+    auto canon_path = FSLib::canonical(path);
+    std::cout << "CANON: " << canon_path << std::endl;
+    if(canon_path.substr(0, cfg.getSourcePath().length()) != cfg.getSourcePath()) {
+        return {false, "Invalid path"};
+    }
+
     if(target_id >= cfg.getTargetPaths().size()) {
         return {false, "Invalid target_id"};
     }
     if(!FSLib::exists(path)) {
         return {false, "Source doesn't exist"};
     }
-    auto target_dir = cfg.getTargetPaths()[target_id].first + FSLib::dir_divisor + containing_dir;
+    auto target_start = cfg.getTargetPaths()[target_id].first;
+    auto target_dir = target_start + FSLib::dir_divisor + containing_dir;
+    auto target_canon = FSLib::canonical(target_dir);
+    if(target_canon.substr(0, target_start.length()) != target_start && !target_canon.empty()) {
+        return {false, "Invalid target"};
+    }
+    // might result in needless false positives, but better be safe than sorry
+    if(target_canon.empty() && target_dir.find("..") != std::string::npos ) {
+        return {false, "Invalid target"};
+    }
     if(!FSLib::exists(target_dir)) {
         FSLib::createDirectoryFull(target_dir);
     }
@@ -384,15 +393,15 @@ void moveRest( const std::shared_ptr< restbed::Session > &session, rapidjson::Ge
 }
 
 std::pair<bool, std::string> remove(std::string path) {
-    if(path[0] == '/' && path.substr(0, cfg.getSourcePath().length()) != cfg.getSourcePath()) {
-        return {false, "Invalid path"};
-    }
-    if(path.find("..") != std::string::npos) {
-        return {false, "Path cannot contain '..'"};
-    }
     if(path[0] != '/') {
         path = cfg.getSourcePath() + "/" + path;
     }
+
+    auto canon_path = FSLib::canonical(path);
+    if(canon_path.substr(0, cfg.getSourcePath().length()) != cfg.getSourcePath()) {
+        return {false, "Invalid path"};
+    }
+
     if(!FSLib::exists(path)) {
         return {false, "Source doesn't exist"};
     }
