@@ -45,6 +45,18 @@ constexpr const char_t *_tv_rename_dir_divider = "/";
 string _moviedb_api_token{};
 Request _moviedb_request;
 
+struct MovieNames {
+    string name;
+    string original_name;
+};
+
+struct MovieInfo {
+    string name;
+    string original_name;
+    string year;
+    string id;
+};
+
 bool init(const string &config_path) {
     Request &request = _moviedb_request;
 #ifdef _WIN32
@@ -60,7 +72,7 @@ bool hasKey(const rapidjson::GenericValue<rapidjson::UTF8<>> &object, const std:
     return object.FindMember(key.c_str()) != object.MemberEnd();
 }
 
-std::vector< std::tuple< string, string, string, string > >
+std::vector< MovieInfo >
 searchMovie( const string &movie, const string &language, const string &year ) {
     Request &request = _moviedb_request;
     request.addHeader( TEXT( "Accept: application/json" ) );
@@ -70,7 +82,7 @@ searchMovie( const string &movie, const string &language, const string &year ) {
     int pages = 0;
     int cur_page = 0;
 
-    std::vector< std::tuple< string, string, string, string > > ret;
+    std::vector< MovieInfo > ret;
 
     do {
         cur_page++;
@@ -106,21 +118,26 @@ searchMovie( const string &movie, const string &language, const string &year ) {
             } else {
                 year = year.substr(0, year.find('-'));
             }
-            ret.emplace_back( movie, id, year, original );
+            MovieInfo tmp;
+            tmp.name = std::move(movie);
+            tmp.id = std::move(id);
+            tmp.original_name = std::move(original);
+            tmp.year = std::move(year);
+            ret.push_back(std::move(tmp));
         }
     } while(cur_page < pages && cur_page < 5);
     request.clearHeader();
     return ret;
 }
 
-RenameObject movieToRenameObject( const std::tuple< string, string, string, string > &movie,
+RenameObject movieToRenameObject( const MovieInfo &movie,
                                  const std::string &language ) {
     RenameObject result;
-    result.setPresentedName( std::get<0>(movie) );
-    result.addCustomField( "id", std::get<1>(movie) );
+    result.setPresentedName( movie.name );
+    result.addCustomField( "id", movie.id );
     result.addCustomField( "language", language );
-    result.addCustomField( "year", std::get<2>(movie) );
-    result.addCustomField( "original_title", std::get<3>(movie) );
+    result.addCustomField( "year", movie.year );
+    result.addCustomField( "original_title", movie.original_name );
     result.addCustomField( "use_original", "false" );
     return result;
 }
@@ -145,7 +162,45 @@ std::vector< RenameObject > getOptions( const RenameObject &search ) {
     return result;
 }
 
-std::pair<string, string> movieFromId( const string &id, const string &language ) {
+std::string removeIllegalCharacters(const std::string &input) {
+    // replace '/' with '|'
+    std::string ret = input;
+    for ( size_t i = 0; i < ret.size(); i++ ) {
+        if ( ret[i] == '/' ) {
+            ret[i] = '|';
+        }
+    }
+    // replace characters illegal in windows
+    ret.erase( std::remove_if( ret.begin(), ret.end(),
+                                []( char_t x ) {
+                                    return x == '?' || x == '"' ||
+                                           x == '\\' || x == '*';
+                                } ),
+                ret.end() );
+    for ( size_t i = 0; i < ret.size(); i++ ) {
+        if ( ret[i] == '|' ) {
+            ret[i] = '-';
+        } else if ( ret[i] == '<' ) {
+            ret.erase( i, 1 );
+            ret.insert( i, TEXT( "＜" ) );
+        } else if ( ret[i] == '>' ) {
+            ret.erase( i, 1 );
+            ret.insert( i, TEXT( "＞" ) );
+        } else if ( ret[i] == ':' ) {
+            ret[i] = ' ';
+            ret.insert( i + 1, TEXT( "- " ) );
+        }
+    }
+    for ( size_t i = 0; i < ret.size(); i++ ) {
+        if ( ret[i] == ' ' && ret[i + 1] == ' ' ) {
+            ret.erase( i, 1 );
+            i--;
+        }
+    }
+    return ret;
+}
+
+MovieNames movieFromId( const string &id, const string &language ) {
     string uri = "/movie/" + id + "?language=" + language;
 
     Request &request = _moviedb_request;
@@ -156,7 +211,7 @@ std::pair<string, string> movieFromId( const string &id, const string &language 
     if( json.HasParseError() ) {
         return {"", ""};
     }
-    return {json["title"].GetString(), json["original_title"].GetString()};
+    return {removeIllegalCharacters( json["title"].GetString() ), removeIllegalCharacters( json["original_title"].GetString() )};
 }
 
 bool renameMovie(const string &path, const string &name, const string &year) {
@@ -166,7 +221,7 @@ bool renameMovie(const string &path, const string &name, const string &year) {
 bool renamePath( const string &path, const RenameObject &renamer ) {
     string id = "";
     string lang = "en-US";
-    std::pair<string,string> movie = {"",""};
+    MovieNames movie = {"",""};
     string year = "";
     bool use_original = false;
 
@@ -192,15 +247,18 @@ bool renamePath( const string &path, const RenameObject &renamer ) {
         auto results = searchMovie( renamer.getPresentedName(), lang, year );
         if ( results.empty() )
             return false;
-        id = std::get<1>(results[0]);
-        movie = { std::get<0>(results[0]), std::get<3>(results[0]) };
-        year = std::get<2>(results[0]);
+        id = results[0].id;
+        movie = { removeIllegalCharacters( results[0].name ), removeIllegalCharacters( results[0].original_name ) };
+        year = results[0].year;
     } else {
         id = renamer.getCustomFields().at( "id" );
         movie = movieFromId( id, lang );
     }
 
-    return renameMovie( path, use_original ? movie.second : movie.first, year );
+    if((!use_original && movie.name == "") || (use_original && movie.original_name == ""))
+        return false;
+
+    return renameMovie( path, use_original ? movie.original_name : movie.name, year );
 }
 
 std::vector< string > getCustomKeys() {
