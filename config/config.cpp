@@ -5,7 +5,7 @@
 bool Configuration::readConfiguration(const std::string &file) {
     libconfig::Config cfg;
     try {
-        cfg.readFile(file);
+        cfg.readFile(file.c_str());
     } catch (const libconfig::FileIOException &fioex) {
         std::cerr << "Couldn't open configuration file" << std::endl;
         return false;
