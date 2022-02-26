@@ -10,11 +10,8 @@ enum FileType {
 
 class FileObject {
 public:
-    FileObject( const std::string &name )
-            : _name( name ) {}
-
-    const std::string &getName() const {
-        return _name;
+    const std::string &getPath() const {
+        return _path;
     }
 
     const int &getDepth() const {
@@ -33,16 +30,20 @@ public:
         _depth = depth;
     }
 
+    void setPath(const std::string &path) {
+        _path = path;
+    }
+
     bool operator < (const FileObject &other) const {
-        return _name < other.getName();
+        return _path < other.getPath();
     }
 
     bool operator > (const FileObject &other) const {
-        return _name > other.getName();
+        return _path > other.getPath();
     }
 
 private:
-    std::string _name;
+    std::string _path = "";
     int _depth = -1;
     FileType _type = TYPE_FILE;
 };

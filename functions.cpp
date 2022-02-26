@@ -60,26 +60,28 @@ void closeLibraries( std::vector< RenameLibrary > &libraries ) {
 
 void addFilesRecursive(const FileObject &parent, std::vector< FileObject > &results, const std::string &filename, const std::string &containing_directory, bool dir_only = false ) {
     auto path = containing_directory + FSLib::dir_divisor + filename;
+    FileObject fo{};
     if(!dir_only || FSLib::isDirectory(path)) {
-        if(!parent.getName().empty()) {
-            results.emplace_back(parent.getName() + FSLib::dir_divisor + filename);
+        if(!parent.getPath().empty()) {
+            fo.setPath(parent.getPath() + FSLib::dir_divisor + filename);
         } else {
-            results.emplace_back(filename);
+            fo.setPath(filename);
         }
-        results.back().setDepth(parent.getDepth() + 1);
+        fo.setDepth(parent.getDepth() + 1);
     }
     if( FSLib::isDirectory(path) ) {
-        results.back().setFileType(TYPE_DIRECTORY);
+        fo.setFileType(TYPE_DIRECTORY);
         for(const auto &entry : FSLib::Directory(path)) {
-            addFilesRecursive(results.back(), results, entry, path, dir_only);
+            addFilesRecursive(fo, results, entry, path, dir_only);
         }
     }
+    results.push_back(std::move(fo));
 }
 
 std::vector< FileObject > getFilesInSource( const std::string &source_dir ) {
     std::vector< FileObject > result;
     for(const auto &entry : FSLib::Directory(source_dir)) {
-        addFilesRecursive(FileObject(""), result, entry, source_dir);
+        addFilesRecursive(FileObject(), result, entry, source_dir);
     }
     std::sort(result.begin(), result.end());
     return result;
@@ -88,7 +90,7 @@ std::vector< FileObject > getFilesInSource( const std::string &source_dir ) {
 std::vector< FileObject > getTargetDirectories( const std::string &target_dir ) {
     std::vector< FileObject > result;
     for(const auto &entry : FSLib::Directory(target_dir)) {
-        addFilesRecursive(FileObject(""), result, entry, target_dir, true);
+        addFilesRecursive(FileObject(), result, entry, target_dir, true);
     }
     std::sort(result.begin(), result.end());
     return result;

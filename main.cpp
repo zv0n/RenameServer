@@ -235,7 +235,7 @@ std::string getFilesJson() {
     auto files = getFilesInSource(cfg.getSourcePath());
     if(!files.empty()) {
         for(const auto &file : files) {
-            res << "    {\n      \"path\": \"" << safeJson(file.getName()) << "\",\n";
+            res << "    {\n      \"path\": \"" << safeJson(file.getPath()) << "\",\n";
             res << "      \"depth\": " << file.getDepth() << ",\n";
             res << "      \"type\": \"" << (file.getFileType() == TYPE_FILE ? "file" : "directory") << "\"\n    },\n";
         }
@@ -294,7 +294,7 @@ std::string getTargetDirectoriesJson(uint64_t id) {
     auto dirs = getTargetDirectories(cfg.getTargetPaths()[id].first);
     if(!dirs.empty()) {
         for(const auto &dir : dirs) {
-            res << "  \"" << safeJson(dir.getName()) << "\",\n";
+            res << "  \"" << safeJson(dir.getPath()) << "\",\n";
         }
         res.seekp(-2, std::ios_base::end);
     }
