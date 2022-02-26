@@ -58,32 +58,37 @@ void closeLibraries( std::vector< RenameLibrary > &libraries ) {
     }
 }
 
-void addFilesRecursive(const std::string &prefix, std::vector< std::string > &results, const std::string &filename, const std::string &containing_directory, bool dir_only = false ) {
+void addFilesRecursive(const FileObject &parent, std::vector< FileObject > &results, const std::string &filename, const std::string &containing_directory, bool dir_only = false ) {
     auto path = containing_directory + FSLib::dir_divisor + filename;
     if(!dir_only || FSLib::isDirectory(path)) {
-        results.push_back(prefix + filename);
+        if(!parent.getName().empty()) {
+            results.emplace_back(parent.getName() + FSLib::dir_divisor + filename);
+        } else {
+            results.emplace_back(filename);
+        }
+        results.back().setDepth(parent.getDepth() + 1);
     }
     if( FSLib::isDirectory(path) ) {
-        auto newprefix = prefix + filename + FSLib::dir_divisor;
+        results.back().setFileType(TYPE_DIRECTORY);
         for(const auto &entry : FSLib::Directory(path)) {
-            addFilesRecursive(newprefix, results, entry, path, dir_only);
+            addFilesRecursive(results.back(), results, entry, path, dir_only);
         }
     }
 }
 
-std::vector< std::string > getFilesInSource( const std::string &source_dir ) {
-    std::vector< std::string > result;
+std::vector< FileObject > getFilesInSource( const std::string &source_dir ) {
+    std::vector< FileObject > result;
     for(const auto &entry : FSLib::Directory(source_dir)) {
-        addFilesRecursive("", result, entry, source_dir);
+        addFilesRecursive(FileObject(""), result, entry, source_dir);
     }
     std::sort(result.begin(), result.end());
     return result;
 }
 
-std::vector< std::string > getTargetDirectories( const std::string &target_dir ) {
-    std::vector< std::string > result;
+std::vector< FileObject > getTargetDirectories( const std::string &target_dir ) {
+    std::vector< FileObject > result;
     for(const auto &entry : FSLib::Directory(target_dir)) {
-        addFilesRecursive("", result, entry, target_dir, true);
+        addFilesRecursive(FileObject(""), result, entry, target_dir, true);
     }
     std::sort(result.begin(), result.end());
     return result;

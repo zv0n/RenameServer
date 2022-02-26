@@ -12,10 +12,9 @@
 #include <chrono>
 
 #include "jwt.hpp"
-
 #include "filesystem/filesystem.hpp"
-
 #include "config/config.hpp"
+#include "fileobject.hpp"
 
 std::vector<RenameLibrary> libraries{};
 Configuration cfg;
@@ -204,7 +203,7 @@ std::string renamePathJson(const std::string &path, const RenameObject &renamer)
     } else {
         res << "false";
     }
-    res << "\n";
+    res << ",\n";
     if(!rename_result.first) {
         res << "  \"error\": \"" << safeJson(rename_result.second) << "\"\n";
     }
@@ -236,12 +235,15 @@ void renamePathRest( const std::shared_ptr< restbed::Session > &session, rapidjs
 }
 
 std::string getFilesJson() {
+    std::cout << "GETTING FILES JSON" << std::endl;
     std::ostringstream res;
     res << "{\n  \"files\": [\n";
     auto files = getFilesInSource(cfg.getSourcePath());
     if(!files.empty()) {
         for(const auto &file : files) {
-            res << "\"" << safeJson(file) << "\",\n";
+            res << "    {\n      \"path\": \"" << safeJson(file.getName()) << "\",\n";
+            res << "      \"depth\": " << file.getDepth() << ",\n";
+            res << "      \"type\": \"" << (file.getFileType() == TYPE_FILE ? "file" : "directory") << "\"\n    },\n";
         }
         res.seekp(-2, std::ios_base::end);
     }
@@ -298,7 +300,7 @@ std::string getTargetDirectoriesJson(uint64_t id) {
     auto dirs = getTargetDirectories(cfg.getTargetPaths()[id].first);
     if(!dirs.empty()) {
         for(const auto &dir : dirs) {
-            res << "  \"" << safeJson(dir) << "\",\n";
+            res << "  \"" << safeJson(dir.getName()) << "\",\n";
         }
         res.seekp(-2, std::ios_base::end);
     }
@@ -360,7 +362,7 @@ std::string moveJson(const std::string &path, uint64_t target_id, const std::str
     } else {
         res << "false";
     }
-    res << "\n";
+    res << ",\n";
     if(!move_result.first) {
         res << "  \"error\": \"" << safeJson(move_result.second) << "\"\n";
     }
@@ -417,7 +419,7 @@ std::string removeJson(const std::string &path) {
     } else {
         res << "false";
     }
-    res << "\n";
+    res << ",\n";
     if(!remove_result.first) {
         res << "  \"error\": \"" << safeJson(remove_result.second) << "\"\n";
     }
