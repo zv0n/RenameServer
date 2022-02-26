@@ -31,7 +31,6 @@ void performPostFunc(const std::shared_ptr<restbed::Session> &session, const std
     session->fetch( content_length, [callback]( const std::shared_ptr< restbed::Session > &session, const restbed::Bytes & body )
     {
         rapidjson::Document doc;
-        std::cout << std::string(reinterpret_cast<const char*>(body.data()), body.size()) << std::endl;
         doc.Parse(reinterpret_cast<const char*>(body.data()), body.size());
         if(doc.HasParseError()) {
             sendResponse("ERROR: Invalid body!", 401, session);
@@ -42,12 +41,10 @@ void performPostFunc(const std::shared_ptr<restbed::Session> &session, const std
 }
 
 bool verifyLogin( const std::shared_ptr< restbed::Session > &session, rapidjson::GenericDocument<rapidjson::UTF8<>> &doc ) {
-    std::cout << "WAAA" << std::endl;
     if(doc.FindMember("token") == doc.MemberEnd() || !doc["token"].IsString()) {
         sendResponse("ERROR: Invalid token!", 401, session);
         return false;
     }
-    std::cout << "AAAA" << std::endl;
     const auto *token = doc["token"].GetString();
     auto res = verifyJWT(token);
     if(!res) {
@@ -78,7 +75,6 @@ std::string getTypesJson() {
     }
     result << "  ]\n}";
     auto res = result.str();
-    std::cout << res << std::endl;
     return res;
 }
 
@@ -112,7 +108,6 @@ std::string getOptionsJson(const RenameObject &search) {
     }
     res << "  ]\n}";
     auto result = res.str();
-    std::cout << result << std::endl;
     return result;
 }
 
@@ -235,7 +230,6 @@ void renamePathRest( const std::shared_ptr< restbed::Session > &session, rapidjs
 }
 
 std::string getFilesJson() {
-    std::cout << "GETTING FILES JSON" << std::endl;
     std::ostringstream res;
     res << "{\n  \"files\": [\n";
     auto files = getFilesInSource(cfg.getSourcePath());
@@ -326,7 +320,6 @@ std::pair<bool, std::string> move(std::string path, uint64_t target_id, const st
         path = cfg.getSourcePath() + "/" + path;
     }
     auto canon_path = FSLib::canonical(path);
-    std::cout << "CANON: " << canon_path << std::endl;
     if(canon_path.substr(0, cfg.getSourcePath().length()) != cfg.getSourcePath()) {
         return {false, "Invalid path"};
     }

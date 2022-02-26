@@ -30,19 +30,11 @@
 
 constexpr const char_t *_tv_rename_dir_divider = L"\\";
 
-#define cout std::wcout
-#define cerr std::wcerr
-#define cin std::wcin
-
 #define toString( a ) utf8_to_wstring( a )
 
 #else
 
 constexpr const char_t *_tv_rename_dir_divider = "/";
-
-#define cout std::cout
-#define cerr std::cerr
-#define cin std::cin
 
 #define toString( a ) a
 

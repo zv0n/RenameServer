@@ -11,10 +11,6 @@
 #include <codecvt>
 #include <shlobj.h>
 
-#define cout std::wcout
-#define cerr std::wcerr
-#define cin std::wcin
-
 constexpr const char_t *dir_divider = L"\\";
 
 #else // UNIX
@@ -23,10 +19,6 @@ constexpr const char_t *dir_divider = L"\\";
 #include <stdio.h>
 #include <sys/ioctl.h>
 #include <unistd.h>
-
-#define cout std::cout
-#define cerr std::cerr
-#define cin std::cin
 
 constexpr const char_t *dir_divider = "/";
 

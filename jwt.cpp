@@ -52,7 +52,6 @@ bool verifyJWT(const std::string &token) {
 	}
 
     result = true;
-    std::cout << "USER " << jwt_get_grant(jwt, "user") << " LOGGED IN!" << std::endl;
 
 finished_valid:
     finish:
