@@ -84,13 +84,13 @@ void getLibrariesRest( const std::shared_ptr< restbed::Session > &session ) {
 }
 
 std::vector< RenameObject > getOptions(const RenameObject &search) {
-    auto type = search.getLibraryId();
-    if(type >= libraries.size()) {
+    auto library_id = search.getLibraryId();
+    if(library_id >= libraries.size()) {
         return {};
     }
-    auto result = libraries[type].getOptions(search);
+    auto result = libraries[library_id].getOptions(search);
     for(auto &res : result) {
-        res.setLibraryId(type);
+        res.setLibraryId(library_id);
     }
     return result;
 }
@@ -138,18 +138,18 @@ void getOptionsRest( const std::shared_ptr< restbed::Session > &session, rapidjs
     sendResponse(getOptionsJson(search), 200, session);
 }
 
-std::vector< std::string > getCustomKeys(size_t type) {
-    if(type >= libraries.size()) {
+std::vector< std::string > getCustomKeys(size_t library_id) {
+    if(library_id >= libraries.size()) {
         return {};
     }
-    auto result = libraries[type].getCustomKeys();
+    auto result = libraries[library_id].getCustomKeys();
     return result;
 }
 
-std::string getCustomKeysJson(size_t type) {
+std::string getCustomKeysJson(size_t library_id) {
     std::ostringstream res;
     res << "{\n  \"custom_keys\": [\n";
-    auto custom_keys = getCustomKeys(type);
+    auto custom_keys = getCustomKeys(library_id);
     if(!custom_keys.empty()) {
         for(auto &key : custom_keys) {
             res << "\"" << safeJson(key) << "\",\n";
@@ -163,12 +163,12 @@ std::string getCustomKeysJson(size_t type) {
 
 void getCustomKeysRest( const std::shared_ptr< restbed::Session > &session, rapidjson::GenericDocument<rapidjson::UTF8<>> &doc )
 {
-    if(doc.FindMember("type") == doc.MemberEnd() || !doc["type"].IsUint64()) {
-        sendResponse("ERROR: Invalid type!", 401, session);
+    if(doc.FindMember("library_id") == doc.MemberEnd() || !doc["library_id"].IsUint64()) {
+        sendResponse("ERROR: Invalid library_id!", 401, session);
         return;
     }
-    size_t type_id = doc["type"].GetUint64();
-    sendResponse(getCustomKeysJson(type_id), 200, session);
+    size_t library_id = doc["library_id"].GetUint64();
+    sendResponse(getCustomKeysJson(library_id), 200, session);
 }
 
 std::pair<bool, std::string> renamePath(std::string path, const RenameObject &renamer) {
