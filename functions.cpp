@@ -60,22 +60,22 @@ void closeLibraries( std::vector< RenameLibrary > &libraries ) {
 
 void addFilesRecursive(const FileObject &parent, std::vector< FileObject > &results, const std::string &filename, const std::string &containing_directory, bool dir_only = false ) {
     auto path = containing_directory + FSLib::dir_divisor + filename;
-    FileObject fo{};
     if(!dir_only || FSLib::isDirectory(path)) {
+        FileObject fo{};
         if(!parent.getPath().empty()) {
             fo.setPath(parent.getPath() + FSLib::dir_divisor + filename);
         } else {
             fo.setPath(filename);
         }
         fo.setDepth(parent.getDepth() + 1);
-    }
-    if( FSLib::isDirectory(path) ) {
-        fo.setFileType(TYPE_DIRECTORY);
-        for(const auto &entry : FSLib::Directory(path)) {
-            addFilesRecursive(fo, results, entry, path, dir_only);
+        if( FSLib::isDirectory(path) ) {
+            fo.setFileType(TYPE_DIRECTORY);
+            for(const auto &entry : FSLib::Directory(path)) {
+                addFilesRecursive(fo, results, entry, path, dir_only);
+            }
         }
+        results.push_back(std::move(fo));
     }
-    results.push_back(std::move(fo));
 }
 
 std::vector< FileObject > getFilesInSource( const std::string &source_dir ) {
