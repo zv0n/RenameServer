@@ -10,6 +10,7 @@ struct RenameLibrary {
     bool ( *renamePath )( const std::string &, const RenameObject & );
     std::vector< std::string > ( *getCustomKeys )();
     const std::string ( *getName )();
+    const bool ( *canRenameMultipleFiles )();
     void *libhndl;
     std::string name;
     std::string config;

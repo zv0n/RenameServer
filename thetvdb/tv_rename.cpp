@@ -406,5 +406,9 @@ std::vector< string > getCustomKeys() {
 }
 
 const string getName() {
-    return "thetvdb";
+    return "TheTVDB";
+}
+
+const bool canRenameMultipleFiles() {
+    return true;
 }

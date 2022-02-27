@@ -51,5 +51,9 @@ std::vector< string > getCustomKeys() {
 }
 
 const string getName() {
-    return "simple rename";
+    return "Simple Rename";
+}
+
+const bool canRenameMultipleFiles() {
+    return false;
 }

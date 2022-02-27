@@ -21,6 +21,7 @@ std::vector< RenameObject > getOptions( const RenameObject &search );
 bool renamePath( const string &path, const RenameObject &renamer );
 std::vector< string > getCustomKeys();
 const string getName();
+const bool canRenameMultipleFiles();
 }
 
 #endif // TV_RENAME_HPP

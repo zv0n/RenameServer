@@ -53,22 +53,23 @@ bool verifyLogin( const std::shared_ptr< restbed::Session > &session, rapidjson:
     return res;
 }
 
-std::vector<std::pair<std::string, size_t>> getTypes() {
-    std::vector<std::pair<std::string, size_t>> result{};
+std::vector<std::pair<RenameLibrary*, size_t>> getLibraries() {
+    std::vector<std::pair<RenameLibrary*, size_t>> result{};
     for(size_t i = 0; i < libraries.size(); i++) {
-        result.emplace_back(libraries[i].getName(), i);
+        result.emplace_back(&libraries[i], i);
     }
     return result;
 }
 
-std::string getTypesJson() {
-    auto types = getTypes();
+std::string getLibrariesJson() {
+    auto libraries = getLibraries();
     std::ostringstream result;
-    result << "{\n  \"types\": [\n";
-    if(!types.empty()) {
-        for(const auto &type : types) {
-            result << "  {\n    \"id\": " << type.second << ",\n";
-            result << "    \"name\": \"" << safeJson(type.first) << "\"\n  },\n";
+    result << "{\n  \"libraries\": [\n";
+    if(!libraries.empty()) {
+        for(const auto &library : libraries) {
+            result << "  {\n    \"id\": " << library.second << ",\n";
+            result << "    \"name\": \"" << safeJson(library.first->getName()) << "\"\n,";
+            result << "    \"multiple_files\": " << (library.first->canRenameMultipleFiles() ? "true" : "false") << "\n  },\n";
         }
         result.seekp(-2, std::ios_base::end);
         result << "\n";
@@ -78,8 +79,8 @@ std::string getTypesJson() {
     return res;
 }
 
-void getTypesRest( const std::shared_ptr< restbed::Session > &session ) {
-    sendResponse(getTypesJson(), restbed::OK, session);
+void getLibrariesRest( const std::shared_ptr< restbed::Session > &session ) {
+    sendResponse(getLibrariesJson(), restbed::OK, session);
 }
 
 std::vector< RenameObject > getOptions(const RenameObject &search) {
@@ -512,10 +513,10 @@ int main(int argc, char **argv) {
 
     restbed::Service service;
 
-    auto get_types = std::make_shared< restbed::Resource >();
-    get_types->set_path("/get_types");
-    get_types->set_method_handler( "GET", getTypesRest );
-    service.publish(get_types);
+    auto get_libraries = std::make_shared< restbed::Resource >();
+    get_libraries->set_path("/get_libraries");
+    get_libraries->set_method_handler( "GET", getLibrariesRest );
+    service.publish(get_libraries);
 
     auto search = std::make_shared< restbed::Resource >();
     search->set_path("/search");
