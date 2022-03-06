@@ -31,12 +31,8 @@ std::vector< RenameObject > getOptions( const RenameObject & /*UNUSED*/ ) {
 }
 
 bool renamePath( const string &path, const RenameObject &renamer ) {
-    string new_name = "";
-
-    if ( renamer.getCustomFields().find( "new_name" ) !=
-         renamer.getCustomFields().end() ) {
-        new_name = renamer.getCustomFields().at( "new_name" );
-    } else {
+    string new_name = renamer.getPresentedName();
+    if(new_name.empty()) {
         return false;
     }
 
@@ -49,8 +45,20 @@ bool renamePath( const string &path, const RenameObject &renamer ) {
                   new_name );
 }
 
-std::vector< std::pair< string, string > > getCustomKeys() {
-    return { { "new_name", STRING_TYPE } };
+std::vector< std::unordered_map< string, string > > getCustomKeys() {
+    return {};
+}
+
+std::vector< std::pair< string, string > > getCustomKeyOptions(const string &key) {
+    return {};
+}
+
+const string getCustomKeyDefault(const string &key) {
+    return "";
+}
+
+const string choiceDisplay() {
+    return "\%name";
 }
 
 const string getName() {

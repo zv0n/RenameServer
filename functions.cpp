@@ -34,9 +34,21 @@ std::vector< RenameLibrary > getLibraries(const std::vector<std::pair<std::strin
             result.push_back( rl );
             goto dlsymerror;
         }
-        rl.getCustomKeys = ( std::vector< std::pair< std::string, std::string > >( * )() )dlsym(
+        rl.getCustomKeys = ( std::vector< std::unordered_map< std::string, std::string > >( * )() )dlsym(
             libhndl, "getCustomKeys" );
         if ( !rl.getCustomKeys ) {
+            result.push_back( rl );
+            goto dlsymerror;
+        }
+        rl.getCustomKeyOptions = ( std::vector< std::pair< std::string, std::string > >( * )(const std::string &) )dlsym(
+            libhndl, "getCustomKeyOptions" );
+        if ( !rl.getCustomKeyOptions ) {
+            result.push_back( rl );
+            goto dlsymerror;
+        }
+        rl.getCustomKeyDefault = ( const std::string( * )(const std::string &) )dlsym(
+            libhndl, "getCustomKeyDefault" );
+        if ( !rl.getCustomKeyDefault ) {
             result.push_back( rl );
             goto dlsymerror;
         }

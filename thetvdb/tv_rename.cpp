@@ -46,6 +46,191 @@ constexpr const char_t *_tv_rename_dir_divider = "/";
 #define TV_LINUX 0x0400
 #define TV_DVD 0x0800
 
+const std::vector< std::pair< std::string, std::string > > languages = {
+    { "aa", "Afaraf" },
+    { "ab", "аҧсуабызшәа" },
+    { "ae", "avesta" },
+    { "af", "Afrikaans" },
+    { "ak", "Akan" },
+    { "am", "አማርኛ" },
+    { "an", "aragonés" },
+    { "ar", "العربية" },
+    { "as", "অসমীয়া" },
+    { "av", "авармацӀ" },
+    { "ay", "aymararu" },
+    { "az", "azərbaycandili" },
+    { "ba", "башҡорттеле" },
+    { "be", "беларускаямова" },
+    { "bg", "българскиезик" },
+    { "bh", "भोजपुरी" },
+    { "bi", "Bislama" },
+    { "bm", "bamanankan" },
+    { "bn", "বাংলা" },
+    { "bo", "བོད་ཡིག" },
+    { "br", "brezhoneg" },
+    { "bs", "bosanskijezik" },
+    { "ca", "català" },
+    { "ce", "нохчийнмотт" },
+    { "ch", "Chamoru" },
+    { "co", "corsu" },
+    { "cr", "ᓀᐦᐃᔭᐍᐏᐣ" },
+    { "cs", "čeština" },
+    { "cu", "ѩзыкъсловѣньскъ" },
+    { "cv", "чӑвашчӗлхи" },
+    { "cy", "Cymraeg" },
+    { "da", "dansk" },
+    { "de", "Deutsch" },
+    { "dv", "ދިވެހި" },
+    { "dz", "རྫོང་ཁ" },
+    { "ee", "Eʋegbe" },
+    { "el", "ελληνικήγλώσσα" },
+    { "en", "English" },
+    { "eo", "Esperanto" },
+    { "es", "español" },
+    { "et", "eesti" },
+    { "eu", "euskara" },
+    { "fa", "فارسی" },
+    { "ff", "Fulfulde" },
+    { "fi", "suomi" },
+    { "fj", "vosaVakaviti" },
+    { "fo", "føroyskt" },
+    { "fr", "français" },
+    { "fy", "Frysk" },
+    { "ga", "Gaeilge" },
+    { "gd", "Gàidhlig" },
+    { "gl", "galego" },
+    { "gn", "Avañe'ẽ" },
+    { "gu", "ગુજરાતી" },
+    { "gv", "Gaelg" },
+    { "ha", "هَوُسَ" },
+    { "he", "עברית" },
+    { "hi", "हिन्दी" },
+    { "ho", "HiriMotu" },
+    { "hr", "hrvatskijezik" },
+    { "ht", "Kreyòlayisyen" },
+    { "hu", "Magyar" },
+    { "hy", "Հայերեն" },
+    { "hz", "Otjiherero" },
+    { "ia", "Interlingua" },
+    { "id", "BahasaIndonesia" },
+    { "ie", "Interlingue" },
+    { "ig", "AsụsụIgbo" },
+    { "ii", "Nuosuhxop" },
+    { "ik", "Iñupiaq" },
+    { "io", "Ido" },
+    { "is", "Íslenska" },
+    { "it", "italiano" },
+    { "iu", "ᐃᓄᒃᑎᑐᑦ" },
+    { "ja", "日本語" },
+    { "jv", "basaJawa" },
+    { "ka", "ქართული" },
+    { "kg", "KiKongo" },
+    { "ki", "Gĩkũyũ" },
+    { "kj", "Kuanyama" },
+    { "kk", "қазақтілі" },
+    { "kl", "kalaallisut" },
+    { "km", "ខ្មែរ" },
+    { "kn", "ಕನ್ನಡ" },
+    { "ko", "한국어" },
+    { "kr", "Kanuri" },
+    { "ks", "कश्मीरी" },
+    { "ku", "Kurdî" },
+    { "kv", "комикыв" },
+    { "kw", "Kernewek" },
+    { "ky", "кыргызтили" },
+    { "la", "latine" },
+    { "lb", "Lëtzebuergesch" },
+    { "lg", "Luganda" },
+    { "li", "Limburgs" },
+    { "ln", "Lingála" },
+    { "lo", "ພາສາລາວ" },
+    { "lt", "lietuviųkalba" },
+    { "lu", "Luba-Katanga" },
+    { "lv", "latviešuvaloda" },
+    { "mg", "Malagasyfiteny" },
+    { "mh", "KajinM̧ajeļ" },
+    { "mi", "tereoMāori" },
+    { "mk", "македонскијазик" },
+    { "ml", "മലയാളം" },
+    { "mn", "монгол" },
+    { "mr", "मराठी" },
+    { "ms", "bahasaMelayu" },
+    { "mt", "Malti" },
+    { "my", "Burmese" },
+    { "na", "EkakairũNaoero" },
+    { "nd", "isiNdebele" },
+    { "ne", "नेपाली" },
+    { "ng", "Owambo" },
+    { "nl", "Nederlands" },
+    { "no", "Norskbokmål" },
+    { "nr", "isiNdebele" },
+    { "nv", "Dinébizaad" },
+    { "ny", "chiCheŵa" },
+    { "oc", "occitan" },
+    { "oj", "ᐊᓂᔑᓈᐯᒧᐎᓐ" },
+    { "om", "AfaanOromoo" },
+    { "or", "ଓଡ଼ିଆ" },
+    { "os", "иронæвзаг" },
+    { "pa", "ਪੰਜਾਬੀ" },
+    { "pi", "पाऴि" },
+    { "pl", "językpolski" },
+    { "ps", "پښتو" },
+    { "pt", "Português-Brasil" },
+    { "qu", "RunaSimi" },
+    { "rm", "rumantschgrischun" },
+    { "rn", "Ikirundi" },
+    { "ro", "limbaromână" },
+    { "ru", "русскийязык" },
+    { "rw", "Ikinyarwanda" },
+    { "sa", "संस्कृतम्" },
+    { "sc", "sardu" },
+    { "sd", "सिन्धी" },
+    { "se", "Davvisámegiella" },
+    { "sg", "yângâtîsängö" },
+    { "si", "සිංහල" },
+    { "sk", "slovenčina" },
+    { "sl", "slovenskijezik" },
+    { "sm", "gaganafa'aSamoa" },
+    { "sn", "chiShona" },
+    { "so", "Soomaaliga" },
+    { "sq", "gjuhashqipe" },
+    { "sr", "српскијезик" },
+    { "ss", "SiSwati" },
+    { "st", "Sesotho" },
+    { "su", "BasaSunda" },
+    { "sv", "svenska" },
+    { "sw", "Kiswahili" },
+    { "ta", "தமிழ்" },
+    { "te", "తెలుగు" },
+    { "tg", "тоҷикӣ" },
+    { "th", "ไทย" },
+    { "ti", "ትግርኛ" },
+    { "tk", "Türkmen" },
+    { "tl", "WikangTagalog" },
+    { "tn", "Setswana" },
+    { "to", "fakaTonga" },
+    { "tr", "Türkçe" },
+    { "ts", "Xitsonga" },
+    { "tt", "татартеле" },
+    { "tw", "Twi" },
+    { "ty", "ReoTahiti" },
+    { "ug", "Uyƣurqə" },
+    { "uk", "українськамова" },
+    { "ur", "اردو" },
+    { "uz", "Ozbek" },
+    { "ve", "Tshivenḓa" },
+    { "vi", "TiếngViệt" },
+    { "vo", "Volapük" },
+    { "wa", "walon" },
+    { "wo", "Wollof" },
+    { "xh", "isiXhosa" },
+    { "yi", "ייִדיש" },
+    { "yo", "Yorùbá" },
+    { "za", "Saɯcueŋƅ" },
+    { "zh", "大陆简体" },
+    { "zu", "isiZulu" }
+};
+
 string _tv_rename_api_token{};
 Request _tv_rename_request;
 
@@ -71,11 +256,11 @@ bool authenticate( const std::string &api_key ) {
     return true;
 }
 
-bool init(const string &config_path) {
+bool init( const string &config_path ) {
     return authenticate( "42B66F5E-C6BF-423F-ADF9-CC97163472F6" );
 }
 
-std::vector< std::pair< string, string > >
+std::vector< std::tuple< string, string, string > >
 searchShow( const string &show, const string &language ) {
     Request &request = _tv_rename_request;
     request.addHeader( TEXT( "Accept: application/json" ) );
@@ -86,8 +271,7 @@ searchShow( const string &show, const string &language ) {
     auto encoded_show = encodeUrl( show );
 
     rapidjson::Document json;
-    json.Parse(
-        request.get( TEXT( "/search/series?name=" ) + encoded_show ).c_str() );
+    json.Parse( request.get( TEXT( "/search/series?name=" ) + encoded_show ).c_str() );
     if ( json.HasParseError() )
         return {};
 
@@ -96,13 +280,15 @@ searchShow( const string &show, const string &language ) {
         return {};
     }
 
-    std::vector< std::pair< string, string > > ret;
+    std::vector< std::tuple< string, string, string > > ret;
 
     // find all possible shows
     for ( size_t i = 0; i < results.Size(); i++ ) {
         auto show = toString( results[i]["seriesName"].GetString() );
         auto id = toString( std::to_string( results[i]["id"].GetInt() ) );
-        ret.emplace_back( show, id );
+        std::string date = toString( results[i]["firstAired"].GetString() );
+        auto year = date.substr(0, date.find('-'));
+        ret.emplace_back( show, id, year );
     }
     request.clearHeader();
     return ret;
@@ -335,14 +521,15 @@ void allSeasons( const string &id, const string &path, const string &show,
     }
 }
 
-RenameObject showToRenameObject( const std::pair< string, string > &show,
+RenameObject showToRenameObject( const std::tuple< string, string, string > &show,
                                  const std::string &language ) {
     RenameObject result;
-    result.setPresentedName( show.first );
-    result.addCustomField( "id", show.second );
+    result.setPresentedName( std::get<0>(show) );
+    result.addCustomField( "id", std::get<1>(show) );
     result.addCustomField( "language", language );
     result.addCustomField( "order", "aired" );
     result.addCustomField( "pattern", getDefaultPattern() );
+    result.addCustomField( "year", std::get<2>(show) );
     return result;
 }
 
@@ -379,9 +566,10 @@ bool renamePath( const string &path, const RenameObject &renamer ) {
         auto results = searchShow( renamer.getPresentedName(), lang );
         if ( results.empty() )
             return false;
-        id = results[0].second;
-        show = results[0].first;
-    } else if( renamer.getCustomFields().find("id") != renamer.getCustomFields().end()) {
+        id = std::get<1>(results[0]);
+        show = std::get<0>(results[0]);
+    } else if ( renamer.getCustomFields().find( "id" ) !=
+                renamer.getCustomFields().end() ) {
         id = renamer.getCustomFields().at( "id" );
         show = showFromId( id );
     }
@@ -401,11 +589,51 @@ bool renamePath( const string &path, const RenameObject &renamer ) {
     return true;
 }
 
-std::vector< std::pair< string, string > > getCustomKeys() {
-    return { { "id", NUM_TYPE },
-             { "language", STRING_TYPE },
-             { "pattern", STRING_TYPE },
-             { "order", STRING_TYPE } };
+std::vector< std::unordered_map< string, string > > getCustomKeys() {
+    return { {
+                { "name", "id"},
+                {"type", NUM_TYPE},
+                {"input", "true"}
+             },
+             {
+                 { "name", "language" },
+                 { "type", STRING_TYPE },
+                 { "input", "true" },
+             },
+             {
+                 { "name", "pattern" },
+                 { "type", STRING_TYPE },
+                 { "input", "true" },
+             },
+             {
+                 { "name", "order" },
+                 { "type", MULTICHOICE_TYPE },
+                 { "input", "true" },
+             },
+             {
+                 { "name", "year" },
+                 { "type", YEAR_TYPE },
+                 { "input", "false" },
+             }
+           };
+}
+
+std::vector< std::pair< string, string > > getCustomKeyOptions(const string &key) {
+    if(key == "language") {
+        return languages;
+    }
+    return {};
+}
+
+const string choiceDisplay() {
+    return "\%name (\%year)";
+}
+
+const string getCustomKeyDefault(const string &key) {
+    if(key == "language") {
+        return "en";
+    }
+    return "";
 }
 
 const string getName() {

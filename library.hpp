@@ -20,12 +20,17 @@ using string = std::string;
 #define YEAR_TYPE "year"
 #define DATE_TYPE "date"
 #define BOOL_TYPE "bool"
+#define MULTICHOICE_TYPE "multichoice"
 
 extern "C" {
 bool init(const string &configuration);
 std::vector< RenameObject > getOptions( const RenameObject &search );
 bool renamePath( const string &path, const RenameObject &renamer );
-std::vector< std::pair<string, string> > getCustomKeys();
+// key name, key type
+std::vector< std::unordered_map<string, string> > getCustomKeys();
+// option internal representation, option display value
+std::vector< std::pair<string, string> > getCustomKeyOptions(const string &key);
+const string getCustomKeyDefault(const string &key);
 const string getName();
 const bool canRenameMultipleFiles();
 }
