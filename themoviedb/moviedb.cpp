@@ -277,8 +277,12 @@ bool renamePath( const string &path, const RenameObject &renamer ) {
                         year );
 }
 
-std::vector< string > getCustomKeys() {
-    return { "id", "language", "year", "original_title", "use_original" };
+std::vector< std::pair< string, string > > getCustomKeys() {
+    return { { "id", NUM_TYPE },
+             { "language", STRING_TYPE },
+             { "year", YEAR_TYPE },
+             { "original_title", STRING_TYPE },
+             { "use_original", BOOL_TYPE } };
 }
 
 const string getName() {

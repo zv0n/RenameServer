@@ -138,7 +138,7 @@ void getOptionsRest( const std::shared_ptr< restbed::Session > &session, rapidjs
     sendResponse(getOptionsJson(search), 200, session);
 }
 
-std::vector< std::string > getCustomKeys(size_t library_id) {
+std::vector< std::pair< std::string, std::string > > getCustomKeys(size_t library_id) {
     if(library_id >= libraries.size()) {
         return {};
     }
@@ -148,16 +148,16 @@ std::vector< std::string > getCustomKeys(size_t library_id) {
 
 std::string getCustomKeysJson(size_t library_id) {
     std::ostringstream res;
-    res << "{\n  \"custom_keys\": [\n";
+    res << "{\n  \"custom_keys\": {\n";
     auto custom_keys = getCustomKeys(library_id);
     if(!custom_keys.empty()) {
         for(auto &key : custom_keys) {
-            res << "\"" << safeJson(key) << "\",\n";
+            res << "\"" << safeJson(key.first) << "\": \"" << safeJson(key.second) << "\",\n";
         }
         res.seekp( -2, std::ios_base::end );
         res << "\n";
     }
-    res << "  ]\n}";
+    res << "  }\n}";
     return res.str();
 }
 

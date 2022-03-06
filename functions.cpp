@@ -34,7 +34,7 @@ std::vector< RenameLibrary > getLibraries(const std::vector<std::pair<std::strin
             result.push_back( rl );
             goto dlsymerror;
         }
-        rl.getCustomKeys = ( std::vector< std::string >( * )() )dlsym(
+        rl.getCustomKeys = ( std::vector< std::pair< std::string, std::string > >( * )() )dlsym(
             libhndl, "getCustomKeys" );
         if ( !rl.getCustomKeys ) {
             result.push_back( rl );

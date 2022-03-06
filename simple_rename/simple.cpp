@@ -22,11 +22,11 @@ constexpr const char_t *_tv_rename_dir_divider = "/";
 
 #endif
 
-bool init(const string &config_path) {
+bool init( const string &config_path ) {
     return true;
 }
 
-std::vector< RenameObject > getOptions( const RenameObject &/*UNUSED*/ ) {
+std::vector< RenameObject > getOptions( const RenameObject & /*UNUSED*/ ) {
     return {};
 }
 
@@ -40,14 +40,17 @@ bool renamePath( const string &path, const RenameObject &renamer ) {
         return false;
     }
 
-    if ( new_name.find('/') != string::npos || new_name.find('\\') != string::npos ) {
+    if ( new_name.find( '/' ) != string::npos ||
+         new_name.find( '\\' ) != string::npos ) {
         return false;
     }
-    return FSLib::rename( path, FSLib::canonical( FSLib::getContainingDirectory(path) ) + "/" + new_name );
+    return FSLib::rename(
+        path, FSLib::canonical( FSLib::getContainingDirectory( path ) ) + "/" +
+                  new_name );
 }
 
-std::vector< string > getCustomKeys() {
-    return { "new_name" };
+std::vector< std::pair< string, string > > getCustomKeys() {
+    return { { "new_name", STRING_TYPE } };
 }
 
 const string getName() {

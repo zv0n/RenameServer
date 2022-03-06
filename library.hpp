@@ -15,11 +15,17 @@ using string = std::string;
 
 #endif
 
+#define STRING_TYPE "string"
+#define NUM_TYPE "number"
+#define YEAR_TYPE "year"
+#define DATE_TYPE "date"
+#define BOOL_TYPE "bool"
+
 extern "C" {
 bool init(const string &configuration);
 std::vector< RenameObject > getOptions( const RenameObject &search );
 bool renamePath( const string &path, const RenameObject &renamer );
-std::vector< string > getCustomKeys();
+std::vector< std::pair<string, string> > getCustomKeys();
 const string getName();
 const bool canRenameMultipleFiles();
 }

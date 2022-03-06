@@ -401,8 +401,11 @@ bool renamePath( const string &path, const RenameObject &renamer ) {
     return true;
 }
 
-std::vector< string > getCustomKeys() {
-    return { "id", "language", "pattern", "order" };
+std::vector< std::pair< string, string > > getCustomKeys() {
+    return { { "id", NUM_TYPE },
+             { "language", STRING_TYPE },
+             { "pattern", STRING_TYPE },
+             { "order", STRING_TYPE } };
 }
 
 const string getName() {
