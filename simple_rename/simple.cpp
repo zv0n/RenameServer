@@ -68,3 +68,7 @@ const string getName() {
 const bool canRenameMultipleFiles() {
     return false;
 }
+
+const bool shouldPerformSearch() {
+    return false;
+}

@@ -85,6 +85,10 @@ std::string getLibrariesJson() {
             result << "    \"multiple_files\": "
                    << ( library.first->canRenameMultipleFiles() ? "true"
                                                                 : "false" )
+                   << ",\n";
+            result << "    \"should_search\": "
+                   << ( library.first->shouldPerformSearch() ? "true"
+                                                             : "false" )
                    << "\n  },\n";
         }
         result.seekp( -2, std::ios_base::end );

@@ -54,6 +54,7 @@ std::vector< RenameLibrary > getLibraries(const std::vector<std::pair<std::strin
         }
         rl.getName = ( const std::string(*)() ) dlsym( libhndl, "getName" );
         rl.canRenameMultipleFiles = ( const bool(*)() ) dlsym( libhndl, "canRenameMultipleFiles" );
+        rl.shouldPerformSearch = ( const bool(*)() ) dlsym( libhndl, "shouldPerformSearch" );
         rl.config = library.second;
         result.push_back( rl );
     }

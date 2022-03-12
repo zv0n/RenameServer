@@ -33,6 +33,7 @@ std::vector< std::pair<string, string> > getCustomKeyOptions(const string &key);
 const string getCustomKeyDefault(const string &key);
 const string getName();
 const bool canRenameMultipleFiles();
+const bool shouldPerformSearch();
 }
 
 #endif // TV_RENAME_HPP

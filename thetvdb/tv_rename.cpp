@@ -652,3 +652,7 @@ const string getName() {
 const bool canRenameMultipleFiles() {
     return true;
 }
+
+const bool shouldPerformSearch() {
+    return true;
+}
