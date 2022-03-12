@@ -186,6 +186,7 @@ std::string getCustomKeysJson( size_t library_id ) {
         for ( auto &key : custom_keys ) {
             res << "    {\n";
             res << "      \"name\": \"" << safeJson( key["name"] ) << "\",\n";
+            res << "      \"display_name\": \"" << safeJson( key["display_name"] ) << "\",\n";
             res << "      \"type\": \"" << safeJson( key["type"] ) << "\",\n";
             res << "      \"input\": " << safeJson( key["input"] ) << "\n";
             res << "    },\n";
