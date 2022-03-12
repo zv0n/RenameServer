@@ -26,7 +26,7 @@ extern "C" {
 bool init(const string &configuration);
 std::vector< RenameObject > getOptions( const RenameObject &search );
 bool renamePath( const string &path, const RenameObject &renamer );
-// key name, key type
+// TODO create object
 std::vector< std::unordered_map<string, string> > getCustomKeys();
 // option internal representation, option display value
 std::vector< std::pair<string, string> > getCustomKeyOptions(const string &key);

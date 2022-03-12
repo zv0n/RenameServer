@@ -469,27 +469,32 @@ bool renamePath( const string &path, const RenameObject &renamer ) {
 
 std::vector< std::unordered_map< string, string > > getCustomKeys() {
     return { {
-                { "name", "id"},
-                {"type", NUM_TYPE},
-                {"input", "true"}
+                 { "name", "id"},
+                 { "display_name", "Movie ID" },
+                 {"type", NUM_TYPE},
+                 {"input", "true"}
              },
              {
                  { "name", "language" },
+                 { "display_name", "Language to use" },
                  { "type", MULTICHOICE_TYPE },
                  { "input", "true" },
              },
              {
                  { "name", "year" },
+                 { "display_name", "Year of release" },
                  { "type", YEAR_TYPE },
                  { "input", "true" },
              },
              {
                  { "name", "original_title" },
+                 { "display_name", "" },
                  { "type", STRING_TYPE },
                  { "input", "false" },
              },
              {
                  { "name", "use_original" },
+                 { "display_name", "Use the original language title" },
                  { "type", BOOL_TYPE },
                  { "input", "true" },
              },

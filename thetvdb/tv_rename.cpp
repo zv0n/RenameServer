@@ -591,27 +591,32 @@ bool renamePath( const string &path, const RenameObject &renamer ) {
 
 std::vector< std::unordered_map< string, string > > getCustomKeys() {
     return { {
-                { "name", "id"},
-                {"type", NUM_TYPE},
-                {"input", "true"}
+                 { "name", "id"},
+                 { "display_name", "TV Show ID" },
+                 {"type", NUM_TYPE},
+                 {"input", "true"}
              },
              {
                  { "name", "language" },
-                 { "type", STRING_TYPE },
+                 { "display_name", "Language to use" },
+                 { "type", MULTICHOICE_TYPE },
                  { "input", "true" },
              },
              {
                  { "name", "pattern" },
+                 { "display_name", "Rename name pattern" },
                  { "type", STRING_TYPE },
                  { "input", "true" },
              },
              {
                  { "name", "order" },
+                 { "display_name", "Episode order to use" },
                  { "type", MULTICHOICE_TYPE },
                  { "input", "true" },
              },
              {
                  { "name", "year" },
+                 { "display_name", "" },
                  { "type", YEAR_TYPE },
                  { "input", "false" },
              }
@@ -621,6 +626,8 @@ std::vector< std::unordered_map< string, string > > getCustomKeys() {
 std::vector< std::pair< string, string > > getCustomKeyOptions(const string &key) {
     if(key == "language") {
         return languages;
+    } else if(key == "order") {
+        return { {"aired", "Aired order"}, {"dvd", "DVD order"}};
     }
     return {};
 }
@@ -632,6 +639,8 @@ const string choiceDisplay() {
 const string getCustomKeyDefault(const string &key) {
     if(key == "language") {
         return "en";
+    } else if(key == "order") {
+        return "aired";
     }
     return "";
 }
