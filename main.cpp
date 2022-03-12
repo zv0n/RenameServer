@@ -187,7 +187,7 @@ std::string getCustomKeysJson( size_t library_id ) {
             res << "    {\n";
             res << "      \"name\": \"" << safeJson( key["name"] ) << "\",\n";
             res << "      \"type\": \"" << safeJson( key["type"] ) << "\",\n";
-            res << "      \"input\": \"" << safeJson( key["input"] ) << "\"\n";
+            res << "      \"input\": " << safeJson( key["input"] ) << "\n";
             res << "    },\n";
         }
         res.seekp( -2, std::ios_base::end );
