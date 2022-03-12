@@ -182,6 +182,13 @@ std::string getFieldDefault( size_t library_id, const std::string &field ) {
     return libraries[library_id].getCustomKeyDefault( field );
 }
 
+std::string getLibraryPattern( size_t library_id ) {
+    if ( library_id >= libraries.size() ) {
+        return "";
+    }
+    return libraries[library_id].choiceDisplay();
+}
+
 std::string getCustomKeysJson( size_t library_id ) {
     std::ostringstream res;
     res << "{\n  \"custom_keys\": [\n";
@@ -225,6 +232,13 @@ std::string getFieldOptionsJson( size_t library_id, const std::string &field ) {
 std::string getFieldDefaultJson( size_t library_id, const std::string &field ) {
     std::ostringstream res;
     res << "{\n  \"default\": \"" << getFieldDefault( library_id, field )
+        << "\"}";
+    return res.str();
+}
+
+std::string getLibraryPatternJson( size_t library_id ) {
+    std::ostringstream res;
+    res << "{\n  \"pattern\": \"" << getLibraryPattern( library_id )
         << "\"}";
     return res.str();
 }
@@ -274,6 +288,18 @@ void getFieldDefaultRest(
     auto library_id = doc["library_id"].GetUint64();
     auto field = doc["field"].GetString();
     sendResponse( getFieldDefaultJson( library_id, field ), 200, session );
+}
+
+void getLibraryPatternRest(
+    const std::shared_ptr< restbed::Session > &session,
+    rapidjson::GenericDocument< rapidjson::UTF8<> > &doc ) {
+    if ( doc.FindMember( "library_id" ) == doc.MemberEnd() ||
+         !doc["library_id"].IsUint64() ) {
+        sendResponse( "ERROR: Invalid library_id!", 401, session );
+        return;
+    }
+    auto library_id = doc["library_id"].GetUint64();
+    sendResponse( getLibraryPatternJson( library_id ), 200, session );
 }
 
 std::pair< bool, std::string > renamePath( std::string path,
@@ -620,6 +646,10 @@ void getFieldDefaultCall( const std::shared_ptr< restbed::Session > &session ) {
     performPostFunc( session, getFieldDefaultRest );
 }
 
+void getLibraryPatternCall( const std::shared_ptr< restbed::Session > &session ) {
+    performPostFunc( session, getLibraryPatternRest );
+}
+
 void renameCall( const std::shared_ptr< restbed::Session > &session ) {
     performPostFunc( session, renamePathRest );
 }
@@ -683,6 +713,11 @@ int main( int argc, char **argv ) {
     field_default->set_path( "/get_field_default" );
     field_default->set_method_handler( "POST", getFieldDefaultCall );
     service.publish( field_default );
+
+    auto library_pattern = std::make_shared< restbed::Resource >();
+    library_pattern->set_path( "/get_library_pattern" );
+    library_pattern->set_method_handler( "POST", getLibraryPatternCall );
+    service.publish( library_pattern );
 
     auto rename_path = std::make_shared< restbed::Resource >();
     rename_path->set_path( "/rename" );

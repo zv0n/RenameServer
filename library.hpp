@@ -34,6 +34,7 @@ const string getCustomKeyDefault(const string &key);
 const string getName();
 const bool canRenameMultipleFiles();
 const bool shouldPerformSearch();
+const std::string choiceDisplay();
 }
 
 #endif // TV_RENAME_HPP

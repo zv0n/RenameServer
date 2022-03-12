@@ -15,6 +15,7 @@ struct RenameLibrary {
     const std::string ( *getName )();
     const bool ( *canRenameMultipleFiles )();
     const bool ( *shouldPerformSearch )();
+    const std::string ( *choiceDisplay )();
     void *libhndl;
     std::string name;
     std::string config;
