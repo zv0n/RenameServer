@@ -197,7 +197,8 @@ std::string getCustomKeysJson( size_t library_id ) {
         for ( auto &key : custom_keys ) {
             res << "    {\n";
             res << "      \"name\": \"" << safeJson( key["name"] ) << "\",\n";
-            res << "      \"display_name\": \"" << safeJson( key["display_name"] ) << "\",\n";
+            res << "      \"display_name\": \""
+                << safeJson( key["display_name"] ) << "\",\n";
             res << "      \"type\": \"" << safeJson( key["type"] ) << "\",\n";
             res << "      \"input\": " << safeJson( key["input"] ) << "\n";
             res << "    },\n";
@@ -238,8 +239,7 @@ std::string getFieldDefaultJson( size_t library_id, const std::string &field ) {
 
 std::string getLibraryPatternJson( size_t library_id ) {
     std::ostringstream res;
-    res << "{\n  \"pattern\": \"" << getLibraryPattern( library_id )
-        << "\"}";
+    res << "{\n  \"pattern\": \"" << getLibraryPattern( library_id ) << "\"}";
     return res.str();
 }
 
@@ -334,9 +334,11 @@ std::string renamePathJson( const std::string &path,
     } else {
         res << "false";
     }
-    res << ",\n";
     if ( !rename_result.first ) {
+        res << ",\n";
         res << "  \"error\": \"" << safeJson( rename_result.second ) << "\"\n";
+    } else {
+        res << "\n";
     }
     res << "}";
     return res.str();
@@ -509,9 +511,11 @@ std::string moveJson( const std::string &path, uint64_t target_id,
     } else {
         res << "false";
     }
-    res << ",\n";
     if ( !move_result.first ) {
+        res << ",\n";
         res << "  \"error\": \"" << safeJson( move_result.second ) << "\"\n";
+    } else {
+        res << "\n";
     }
     res << "}";
     return res.str();
@@ -572,9 +576,11 @@ std::string removeJson( const std::string &path ) {
     } else {
         res << "false";
     }
-    res << ",\n";
     if ( !remove_result.first ) {
+        res << ",\n";
         res << "  \"error\": \"" << safeJson( remove_result.second ) << "\"\n";
+    } else {
+        res << "\n";
     }
     res << "}";
     return res.str();
@@ -630,6 +636,122 @@ void loginRest( const std::shared_ptr< restbed::Session > &session,
     }
 }
 
+std::tuple< bool, bool, std::string >
+exists( std::string path, bool is_in_source, uint64_t target_id ) {
+    if ( target_id >= cfg.getTargetPaths().size() && !is_in_source ) {
+        return { false, false, "Invalid target_id" };
+    }
+    if ( path[0] != '/' ) {
+        if ( is_in_source ) {
+            path = cfg.getSourcePath() + "/" + path;
+        } else {
+            path = cfg.getTargetPaths()[target_id].first + "/" + path;
+        }
+    }
+
+    // check non-canon path doesn't point outside of scope
+    if ( is_in_source ) {
+        if ( path.substr( 0, cfg.getSourcePath().length() ) !=
+             cfg.getSourcePath() ) {
+            return { false, false, "Invalid path" };
+        }
+    } else {
+        auto target_dir = cfg.getTargetPaths()[target_id].first;
+        if ( path.substr( 0, target_dir.length() ) != target_dir ) {
+            return { false, false, "Invalid path" };
+        }
+    }
+    // if file doesn't exist it cannot be a symlink to outside of scope
+    if ( !FSLib::exists( path ) ) {
+        return { true, false, "" };
+    }
+
+    // now check if it's not a symlink pointing somewhere outside of scope
+    auto canon_path = FSLib::canonical( path );
+    if ( is_in_source ) {
+        if ( canon_path.substr( 0, cfg.getSourcePath().length() ) !=
+             cfg.getSourcePath() ) {
+            return { false, false, "Invalid path" };
+        }
+    } else {
+        auto target_dir = cfg.getTargetPaths()[target_id].first;
+        if ( canon_path.substr( 0, target_dir.length() ) != target_dir ) {
+            return { false, false, "Invalid path" };
+        }
+    }
+
+    // we've already checked if file exists
+    return { true, true, "" };
+}
+
+std::string existsJson( const std::string &path, bool is_in_source,
+                        uint64_t target_id ) {
+    auto exists_result = exists( path, is_in_source, target_id );
+    auto success = std::get< 0 >( exists_result );
+    auto exists = std::get< 1 >( exists_result );
+    auto error = std::get< 2 >( exists_result );
+    std::ostringstream res;
+    res << "{\n  \"success\": ";
+    if ( success ) {
+        res << "true";
+    } else {
+        res << "false";
+    }
+    res << ",\n";
+    res << "  \"exists\": ";
+    if ( exists ) {
+        res << "true";
+    } else {
+        res << "false";
+    }
+    if ( !success ) {
+        res << ",\n";
+        res << "  \"error\": \"" << safeJson( error ) << "\"\n";
+    } else {
+        res << "\n";
+    }
+    res << "}";
+    return res.str();
+}
+
+void existsRest( const std::shared_ptr< restbed::Session > &session,
+                 rapidjson::GenericDocument< rapidjson::UTF8<> > &doc ) {
+    if ( !verifyLogin( session, doc ) ) {
+        return;
+    }
+    std::string containing_dir;
+    if ( doc.FindMember( "path" ) == doc.MemberEnd() ||
+         !doc["path"].IsString() ) {
+        // TODO validate path, also validate against config
+        sendResponse( "ERROR: Invalid path!", 401, session );
+        return;
+    }
+    auto path = doc["path"].GetString();
+    bool source = false;
+    if ( doc.FindMember( "source" ) != doc.MemberEnd() ) {
+        if ( !doc["source"].IsBool() ) {
+            sendResponse( "ERROR: source must be a bool!", 401, session );
+        } else {
+            source = doc["source"].GetBool();
+        }
+    }
+    uint64_t target_id = -1;
+    if ( doc.FindMember( "target_id" ) != doc.MemberEnd() ) {
+        if ( !doc["target_id"].IsUint64() ) {
+            sendResponse( "ERROR: Invalid target_id!", 401, session );
+        } else {
+            target_id = doc["target_id"].GetInt();
+        }
+    }
+    if ( !source && target_id == ( uint64_t )-1 ) {
+        sendResponse(
+            "ERROR: path is not in source, but no target_id was provided!", 401,
+            session );
+    }
+    // TODO correct response code
+    sendResponse( existsJson( path, source, target_id ), 200, session );
+}
+
 void getOptionsCall( const std::shared_ptr< restbed::Session > &session ) {
     performPostFunc( session, getOptionsRest );
 }
@@ -646,7 +768,8 @@ void getFieldDefaultCall( const std::shared_ptr< restbed::Session > &session ) {
     performPostFunc( session, getFieldDefaultRest );
 }
 
-void getLibraryPatternCall( const std::shared_ptr< restbed::Session > &session ) {
+void getLibraryPatternCall(
+    const std::shared_ptr< restbed::Session > &session ) {
     performPostFunc( session, getLibraryPatternRest );
 }
 
@@ -677,6 +800,10 @@ void removeCall( const std::shared_ptr< restbed::Session > &session ) {
 
 void loginCall( const std::shared_ptr< restbed::Session > &session ) {
     performPostFunc( session, loginRest );
+}
+
+void existsCall( const std::shared_ptr< restbed::Session > &session ) {
+    performPostFunc( session, existsRest );
 }
 
 int main( int argc, char **argv ) {
@@ -719,6 +846,7 @@ int main( int argc, char **argv ) {
     library_pattern->set_method_handler( "POST", getLibraryPatternCall );
     service.publish( library_pattern );
 
+    // TODO multifile rename
     auto rename_path = std::make_shared< restbed::Resource >();
     rename_path->set_path( "/rename" );
     rename_path->set_method_handler( "POST", renameCall );
@@ -754,6 +882,11 @@ int main( int argc, char **argv ) {
     login->set_path( "/login" );
     login->set_method_handler( "POST", loginCall );
     service.publish( login );
+
+    auto exists = std::make_shared< restbed::Resource >();
+    exists->set_path( "/exists" );
+    exists->set_method_handler( "POST", existsCall );
+    service.publish( exists );
 
     auto settings = std::make_shared< restbed::Settings >();
     settings->set_port( 1984 );
