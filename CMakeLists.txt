@@ -54,7 +54,7 @@ add_library(moviedb SHARED
 
 target_link_libraries(moviedb curl)
 
-add_executable(tests
+add_executable(test
     tests/tests.cpp
     rename_object.cpp
     functions.cpp
@@ -63,6 +63,6 @@ add_executable(tests
     jwt.cpp
     )
 set_source_files_properties(tests/tests.cpp PROPERTIES COMPILE_OPTIONS "--coverage;-g;-fsanitize=address,undefined")
-target_compile_options(tests PUBLIC -Wall -fprofile-arcs -ftest-coverage --coverage -g)
-target_link_options(tests PUBLIC --coverage -Wall -fprofile-arcs -ftest-coverage -fsanitize=address,undefined)
-target_link_libraries(tests PRIVATE restbed config++ jwt Catch2::Catch2WithMain)
+target_compile_options(test PUBLIC -Wall -fprofile-arcs -ftest-coverage --coverage -g)
+target_link_options(test PUBLIC --coverage -Wall -fprofile-arcs -ftest-coverage -fsanitize=address,undefined)
+target_link_libraries(test PRIVATE restbed config++ jwt Catch2::Catch2WithMain)
