@@ -6,6 +6,12 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 include_directories(/usr/local/include)
 link_directories(/usr/local/lib)
 
+if(APPLE)
+    include_directories(/opt/homebrew/include)
+    link_directories(/opt/homebrew/lib)
+endif()
+
+find_package(Catch2 3 REQUIRED)
 
 project(RenameServer)
 
@@ -47,3 +53,16 @@ add_library(moviedb SHARED
     network/unix/network.cpp)
 
 target_link_libraries(moviedb curl)
+
+add_executable(tests
+    tests/tests.cpp
+    rename_object.cpp
+    functions.cpp
+    config/config.cpp
+    filesystem/unix/filesystem.cpp
+    jwt.cpp
+    )
+set_source_files_properties(tests/tests.cpp PROPERTIES COMPILE_OPTIONS "--coverage;-g;-fsanitize=address,undefined")
+target_compile_options(tests PUBLIC -Wall -fprofile-arcs -ftest-coverage --coverage -g)
+target_link_options(tests PUBLIC --coverage -Wall -fprofile-arcs -ftest-coverage -fsanitize=address,undefined)
+target_link_libraries(tests PRIVATE restbed config++ jwt Catch2::Catch2WithMain)
