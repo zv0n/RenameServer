@@ -8,13 +8,13 @@ platform:
 
 steps:
 - name: build
-  image: docker.zvon.tech/cppbuilder:v0.09
+  image: docker.zvon.tech/cppbuilder:v0.10
   commands:
   - export CXX=g++
   - cmake .
   - cmake --build .
 - name: coverage
-  image: docker.zvon.tech/cppbuilder:v0.09
+  image: docker.zvon.tech/cppbuilder:v0.10
   commands:
   - ./test
   - "find . -type f -name \"*.gcno\" -execdir gcov -pb -r {} +"
@@ -27,7 +27,7 @@ steps:
     status:
     - success
 - name: formatting-check
-  image: docker.zvon.tech/cppbuilder:v0.09
+  image: docker.zvon.tech/cppbuilder:v0.10
   commands:
   - find .  -path "./build" -prune -or -path "./.cache" -prune -or -iname "*.cpp" -or -iname "*.hpp" -print | xargs -P0 -I{} clang-format -style=file --dry-run -Werror {}
   when:
