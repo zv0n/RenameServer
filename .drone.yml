@@ -19,7 +19,7 @@ steps:
   - ./test
   - "find . -type f -name \"*.gcno\" -execdir gcov -pb -r {} +"
   - "gcovr --root . -k -j 2 --xml -o gcovr_report.xml --exclude-directories \"tests\""
-  - bash <(curl -Ls https://coverage.codacy.com/get.sh) report -r "gcovr_report.xml" --language CPP --force-language
+  - /usr/bin/codacy-coverage-reporter report -r "gcovr_report.xml" --language CPP --force-language
   environment:
     CODACY_PROJECT_TOKEN:
       from_secret: project_token
